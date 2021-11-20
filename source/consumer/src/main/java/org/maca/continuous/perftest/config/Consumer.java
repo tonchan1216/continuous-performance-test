@@ -1,13 +1,11 @@
-package com.example.batch;
+package org.maca.continuous.perftest.config;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class BatchApplication {
-
+public class Consumer {
     public static void main(String[] args) {
-        SpringApplication.run(BatchApplication.class, args);
+        SpringApplication.run(Consumer.class, args);
     }
-
 }
