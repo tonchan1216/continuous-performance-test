@@ -1,0 +1,43 @@
+cli-aliases:
+  scenario1:
+    execution:
+    - concurrency: 1
+      ramp-up: 10s
+      hold-for: 10s
+      executor: jmeter
+      scenario: test1
+  scenario2:
+    execution:
+    - concurrency: 1
+      ramp-up: 10s
+      hold-for: 10s
+      executor: gatling
+      scenario: test2
+
+scenarios:
+  test1:
+    script: jmeter/google.jmx
+  test2:
+    script: gatling/sample.scala
+    simulation: tests.gatling.BasicSimulation
+
+reporting:
+- module: final-stats
+  summary: true  # overall samples count and percent of failures
+  percentiles: true  # display average times and percentiles
+  summary-labels: false # provides list of sample labels, status, percentage of completed, avg time and errors
+  test-duration: true  # provides test duration
+  dump-xml: /tmp/artifacts/results.xml
+
+modules:
+  console:
+    disable: true
+  jmeter:
+    version: auto
+    force-ctg: true
+    detect-plugins: true
+    properties:
+      log_level.JMeter: WARN
+      log_level.JMeter.threads: WARN
+    system-properties:
+      org.apache.commons.logging.simplelog.log.org.apache.http: WARN
