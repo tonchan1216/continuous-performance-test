@@ -1,11 +1,15 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # set a uuid for the results xml file name in S3
 UUID=$(cat /proc/sys/kernel/random/uuid)
 
+if [ $# -ne 2 ]; then
+  echo "Usage: $CMDNAME test_id test_name" 1>&2
+  exit 1
+fi
+
 TEST_ID=${1:-0001}
 TEST_NAME=${2:-scenario1}
-S3_BUCKET="MA-furutanito-perftest"
 SCRIPT="scripts/taurus.yaml"
 
 echo "TEST_ID:: ${TEST_ID}"
