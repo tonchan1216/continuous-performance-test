@@ -1,0 +1,12 @@
+spring:
+  profiles:
+    active: dev
+  batch:
+    job:
+      enabled: false
+cloud:
+  aws:
+    stack:
+      auto: false
+queue:
+  endpoint: https://sqs.ap-northeast-1.amazonaws.com/
