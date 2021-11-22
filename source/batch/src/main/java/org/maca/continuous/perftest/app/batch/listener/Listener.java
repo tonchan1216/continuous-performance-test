@@ -5,7 +5,7 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListenerSupport;
 
 @Slf4j
-public class SampleListener extends JobExecutionListenerSupport {
+public class Listener extends JobExecutionListenerSupport {
     @Override
     public void afterJob(JobExecution jobExecution) {
         log.info(this.getClass().getName() + "#afterJob started.");
