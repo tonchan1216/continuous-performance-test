@@ -2,17 +2,13 @@ package org.maca.continuous.perftest.config;
 
 import org.maca.continuous.perftest.app.batch.listener.Listener;
 import org.maca.continuous.perftest.app.batch.partitioner.DistributedPartitioner;
+import org.maca.continuous.perftest.app.batch.step.InputTasklet;
 import org.maca.continuous.perftest.app.batch.step.ResultTasklet;
 import org.maca.continuous.perftest.app.batch.step.RunTaskTasklet;
-import org.maca.continuous.perftest.app.batch.step.InputTasklet;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.DefaultBatchConfigurer;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.configuration.annotation.*;
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +22,7 @@ import org.springframework.core.task.TaskExecutor;
 
 import javax.sql.DataSource;
 
-@Import(BatchInfraConfig.class)                                               // ...(A)
+@Import(BatchInfraConfig.class)
 @Configuration
 @EnableBatchProcessing
 public class BatchAppConfig extends DefaultBatchConfigurer {
@@ -42,7 +38,7 @@ public class BatchAppConfig extends DefaultBatchConfigurer {
         return jobBuilderFactory.get("performanceTestJob")
                 .listener(jobExecutionListener())
                 .start(step1)
-                .next(partionStep())
+                .next(partitionStep())
                 .next(step3())
                 .build();
     }
@@ -72,7 +68,7 @@ public class BatchAppConfig extends DefaultBatchConfigurer {
     }
 
     @Bean
-    protected Step partionStep(){
+    protected Step partitionStep(){
         return stepBuilderFactory.get("partitionStep")
                 .partitioner(step2())
                 .partitioner("step2", partitioner(null))
