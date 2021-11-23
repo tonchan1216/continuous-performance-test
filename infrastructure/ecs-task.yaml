@@ -1,34 +1,22 @@
 AWSTemplateFormatVersion: '2010-09-09'
-
-Description: Sample CloudFormation template with YAML - ECS Task Definition Depends on sample-vpc-cfn.yml, sample-sg-cfn.yml, sample-ecs-cluster-cfn.yml
+Description: ECS Task Definition
 
 Parameters:
-  VPCName:
-    Description: Target VPC Stack Name
+  Prefix:
+    Description: Prefix Name
     Type: String
     MinLength: 1
     MaxLength: 255
     AllowedPattern: ^[a-zA-Z][-a-zA-Z0-9]*$
-    Default: mynavi-sample-cloudformation-vpc
-  EnvType:
-    Description: Which environments to deploy your service.
+    Default: continuous-perftest
+  ContainerImage:
+    Description: Prefix Name
     Type: String
-    AllowedValues: ["Dev", "Staging", "Production"]
-    Default: Dev
-
-Mappings:
-  BackendServiceTaskDefinitionMap:
-    "Memory" : 1024
-    "Cpu" : 512
-    "ContainerName" : "mynavi-sample-cloudformation-ecs-backend-service"
-    "ContainerImage" : "debugroom/mynavi-sample-cloudformation-ecs-backend-service:1.0-RELEASE"
-    "ContainerPort" : 8080
-    "HostPort" : 0
-    "ContainerMemory" : 1024
-    "Profile" : "production"
+    MinLength: 1
+    Default: repository/name:tag
 
 Resources:
-  BackendECSTaskRole:
+  ECSTaskRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
@@ -54,37 +42,34 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
         - arn:aws:iam::aws:policy/SecretsManagerReadWrite
 
-  BackendServiceECSTaskDefinition:
+  ECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub sample-ecstask-backend-service-${EnvType}
+      Family: !Sub ${Prefix}-consumer
       RequiresCompatibilities:
         - EC2
-      Memory: !FindInMap [BackendServiceTaskDefinitionMap, Memory]
-      Cpu: !FindInMap [BackendServiceTaskDefinitionMap, Cpu]
+      Memory: 1024
+      Cpu: 512
       NetworkMode: bridge
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
-      TaskRoleArn: !GetAtt BackendECSTaskRole.Arn
+      TaskRoleArn: !GetAtt ECSTaskRole.Arn
       ContainerDefinitions:
-        - Name: !FindInMap [BackendServiceTaskDefinitionMap, ContainerName]
-          Image: !FindInMap [BackendServiceTaskDefinitionMap, ContainerImage]
-          PortMappings:
-            - ContainerPort: !FindInMap [BackendServiceTaskDefinitionMap, ContainerPort]
-              HostPort: !FindInMap [BackendServiceTaskDefinitionMap, HostPort]
-          Memory: !FindInMap [BackendServiceTaskDefinitionMap, ContainerMemory]
+        - Name: !Sub ${Prefix}-consumer
+          Image: !Ref ContainerImage
+          Memory: 1024
           Environment:
             - Name: ENV_TYPE
-              Value: !FindInMap [BackendServiceTaskDefinitionMap, Profile]
+              Value: production
 
 Outputs:
-  BackendECSTaskDefinition:
-    Description: Backend ECS Task Definition
-    Value: !Ref BackendServiceECSTaskDefinition
+  ECSTaskDefinition:
+    Description:  ECS Task Definition
+    Value: !Ref ECSTaskDefinition
     Export:
-      Name: !Sub ${VPCName}-BackendEcsTaskDefinition-${EnvType}
+      Name: !Sub ${Prefix}-EcsTaskDefinition
 
-  BackendECSTaskRole:
-    Description: Backend ECS Task has role
-    Value: !Ref BackendECSTaskRole
+  ECSTaskRole:
+    Description:  ECS Task has role
+    Value: !Ref ECSTaskRole
     Export:
-      Name: !Sub ${VPCName}-BackendEcsTaskRole-${EnvType}
+      Name: !Sub ${Prefix}-EcsTaskRole

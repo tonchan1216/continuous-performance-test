@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Sample CloudFormation template with YAML - VPC
+Description: VPC, Subnet, Routetable, NAT Gatway
 
 Parameters:
   Prefix:

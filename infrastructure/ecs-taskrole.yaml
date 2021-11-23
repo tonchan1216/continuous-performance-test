@@ -1,0 +1,142 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Service Launch
+
+Parameters:
+  Prefix:
+    Description: Prefix Name
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: ^[a-zA-Z][-a-zA-Z0-9]*$
+    Default: continuous-perftest
+
+Resources:
+  CloudFormationAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-CloudFormationAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "cloudformation:*"
+            Resource: "*"
+      Roles:
+        - Fn::ImportValue: !Sub ${Prefix}-EcsTaskRole
+
+  SQSAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-SQSAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "sqs:*"
+            Resource: "*"
+      Roles:
+        - Fn::ImportValue: !Sub ${Prefix}-EcsTaskRole
+
+  DynamoDBAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-DynamoDBAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "dynamodb:*"
+              - "dax:*"
+              - "application-autoscaling:DeleteScalingPolicy"
+              - "application-autoscaling:DeregisterScalableTarget"
+              - "application-autoscaling:DescribeScalableTargets"
+              - "application-autoscaling:DescribeScalingActivities"
+              - "application-autoscaling:DescribeScalingPolicies"
+              - "application-autoscaling:PutScalingPolicy"
+              - "application-autoscaling:RegisterScalableTarget"
+              - "cloudwatch:DeleteAlarms"
+              - "cloudwatch:DescribeAlarmHistory"
+              - "cloudwatch:DescribeAlarms"
+              - "cloudwatch:DescribeAlarmsForMetric"
+              - "cloudwatch:GetMetricStatistics"
+              - "cloudwatch:ListMetrics"
+              - "cloudwatch:PutMetricAlarm"
+              - "datapipeline:ActivatePipeline"
+              - "datapipeline:CreatePipeline"
+              - "datapipeline:DeletePipeline"
+              - "datapipeline:DescribeObjects"
+              - "datapipeline:DescribePipelines"
+              - "datapipeline:GetPipelineDefinition"
+              - "datapipeline:ListPipelines"
+              - "datapipeline:PutPipelineDefinition"
+              - "datapipeline:QueryObjects"
+              - "ec2:DescribeVpcs"
+              - "ec2:DescribeSubnets"
+              - "ec2:DescribeSecurityGroups"
+              - "iam:GetRole"
+              - "iam:ListRoles"
+              - "kms:DescribeKey"
+              - "kms:ListAliases"
+              - "sns:CreateTopic"
+              - "sns:DeleteTopic"
+              - "sns:ListSubscriptions"
+              - "sns:ListSubscriptionsByTopic"
+              - "sns:ListTopics"
+              - "sns:Subscribe"
+              - "sns:Unsubscribe"
+              - "sns:SetTopicAttributes"
+              - "lambda:CreateFunction"
+              - "lambda:ListFunctions"
+              - "lambda:ListEventSourceMappings"
+              - "lambda:CreateEventSourceMapping"
+              - "lambda:DeleteEventSourceMapping"
+              - "lambda:GetFunctionConfiguration"
+              - "lambda:DeleteFunction"
+              - "resource-groups:ListGroups"
+              - "resource-groups:ListGroupResources"
+              - "resource-groups:GetGroup"
+              - "resource-groups:GetGroupQuery"
+              - "resource-groups:DeleteGroup"
+              - "resource-groups:CreateGroup"
+              - "tag:GetResources"
+            Resource: "*"
+      Roles:
+        - Fn::ImportValue: !Sub ${Prefix}-EcsTaskRole
+
+  SSMAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-ElastiCacheAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "cloudwatch:PutMetricData"
+              - "ds:CreateComputer"
+              - "ds:DescribeDirectories"
+              - "ec2:DescribeInstanceStatus"
+              - "logs:*"
+              - "ssm:*"
+              - "ec2messages:*"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "iam:CreateServiceLinkedRole"
+            Resource: "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*"
+            Condition:
+              StringLike:
+                iam:AWSServiceName : "ssm.amazonaws.com"
+          - Effect: Allow
+            Action:
+              - "iam:DeleteServiceLinkedRole"
+              - "iam:GetServiceLinkedRoleDeletionStatus"
+            Resource: "arn:aws:iam::*:role/aws-service-role/ssm.amazonaws.com/AWSServiceRoleForAmazonSSM*"
+          - Effect: Allow
+            Action:
+              - "ssmmessages:CreateControlChannel"
+              - "ssmmessages:CreateDataChannel"
+              - "ssmmessages:OpenControlChannel"
+              - "ssmmessages:OpenDataChannel"
+            Resource: "*"
+      Roles:
+        - Fn::ImportValue: !Sub ${Prefix}-EcsTaskRole

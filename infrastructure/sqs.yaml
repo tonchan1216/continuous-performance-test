@@ -1,6 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-
-Description: Sample CloudFormation template with YAML - SQS Definition
+Description: SQS Definition
 
 Parameters:
   Prefix:
@@ -36,7 +35,7 @@ Outputs:
       Name: SQS-Region
 
   SQSQueue:
-    Description: SQS sample queue name
+    Description: SQS  queue name
     Value: !Ref SQSQueue
     Export:
       Name: SQS-Name

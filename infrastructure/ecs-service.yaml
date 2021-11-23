@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Service Launch
+
+Parameters:
+  Prefix:
+    Description: Prefix Name
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: ^[a-zA-Z][-a-zA-Z0-9]*$
+    Default: continuous-perftest
+
+Resources:
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster:
+        Fn::ImportValue: !Sub ${Prefix}-EcsCluster
+      DesiredCount: 0
+      TaskDefinition:
+        Fn::ImportValue: !Sub ${Prefix}-EcsTaskDefinition
+      LaunchType: EC2
+      ServiceName: !Sub ${Prefix}-consumer-service
+
+Outputs:
+  ECSService:
+    Description:  ECS Service
+    Value: !Ref ECSService
+    Export:
+      Name: !Sub ${Prefix}-ECSService

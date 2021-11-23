@@ -25,13 +25,13 @@ Resources:
 
 Outputs:
   S3Bucket:
-    Description: Mynavi S3 bucket name
+    Description: S3 bucket name
     Value: !Ref S3Bucket
     Export:
       Name: S3Bucket
 
   S3BucketArn:
-    Description: Mynavi S3 bucket arn
+    Description: S3 bucket arn
     Value: !GetAtt S3Bucket.Arn
     Export:
       Name: S3Bucket-Arn
