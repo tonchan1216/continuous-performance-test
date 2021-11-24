@@ -230,6 +230,6 @@ Outputs:
     Description: PrivateSubnet3Arn
     Value: !Sub
       - arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:subnet/${PrivateSubnet3}
-      - PrivateSubnet2: !Ref PrivateSubnet3
+      - PrivateSubnet3: !Ref PrivateSubnet3
     Export:
       Name: !Sub ${Prefix}-PrivateSubnet3Arn

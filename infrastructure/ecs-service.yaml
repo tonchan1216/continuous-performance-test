@@ -18,7 +18,7 @@ Resources:
         Fn::ImportValue: !Sub ${Prefix}-EcsCluster
       DesiredCount: 0
       TaskDefinition:
-        Fn::ImportValue: !Sub ${Prefix}-EcsTaskDefinition
+        Fn::ImportValue: !Sub ${Prefix}-ConsumerECSTaskDefinition
       LaunchType: EC2
       ServiceName: !Sub ${Prefix}-consumer-service
 

@@ -16,17 +16,6 @@ Parameters:
     Default: repository/name:tag
 
 Resources:
-  ECSTaskRole:
-    Type: AWS::IAM::Role
-    Properties:
-      Path: /
-      AssumeRolePolicyDocument:
-        Statement:
-          - Action: sts:AssumeRole
-            Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-
   ECSTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -42,7 +31,7 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
         - arn:aws:iam::aws:policy/SecretsManagerReadWrite
 
-  ECSTaskDefinition:
+  ConsumerECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: !Sub ${Prefix}-consumer
@@ -52,24 +41,44 @@ Resources:
       Cpu: 512
       NetworkMode: bridge
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
-      TaskRoleArn: !GetAtt ECSTaskRole.Arn
+      TaskRoleArn:
+        Fn::ImportValue: !Sub ${Prefix}-ECSTaskRole
       ContainerDefinitions:
         - Name: !Sub ${Prefix}-consumer
           Image: !Ref ContainerImage
           Memory: 1024
           Environment:
             - Name: ENV_TYPE
-              Value: production
+              Value: performance
+
+  LoadECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${Prefix}-load-test
+      RequiresCompatibilities:
+        - EC2
+      Memory: 1024
+      Cpu: 512
+      NetworkMode: bridge
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn:
+        Fn::ImportValue: !Sub ${Prefix}-ECSTaskRole
+      ContainerDefinitions:
+        - Name: !Sub ${Prefix}-load-test
+          Image: !Ref ContainerImage
+          Memory: 1024
+          Environment:
+            - Name: ENV_TYPE
+              Value: performance
 
 Outputs:
-  ECSTaskDefinition:
+  ConsumerECSTaskDefinition:
     Description:  ECS Task Definition
-    Value: !Ref ECSTaskDefinition
+    Value: !Ref ConsumerECSTaskDefinition
     Export:
-      Name: !Sub ${Prefix}-EcsTaskDefinition
-
-  ECSTaskRole:
-    Description:  ECS Task has role
-    Value: !Ref ECSTaskRole
+      Name: !Sub ${Prefix}-ConsumerECSTaskDefinition
+  LoadECSTaskDefinition:
+    Description:  ECS Task Definition
+    Value: !Ref LoadECSTaskDefinition
     Export:
-      Name: !Sub ${Prefix}-EcsTaskRole
+      Name: !Sub ${Prefix}-LoadECSTaskDefinition

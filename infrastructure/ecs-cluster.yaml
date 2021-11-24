@@ -61,9 +61,9 @@ Resources:
         - Fn::ImportValue: !Sub ${Prefix}-PrivateSubnet2
         - Fn::ImportValue: !Sub ${Prefix}-PrivateSubnet3
       LaunchConfigurationName: !Ref ECSLaunchConfiguration
-      MinSize: '0'
+      MinSize: 0
       MaxSize: 3
-      DesiredCapacity: 1
+      DesiredCapacity: 0
       Tags:
         - Key: Name
           Value: !Sub ${Prefix}-cluster
