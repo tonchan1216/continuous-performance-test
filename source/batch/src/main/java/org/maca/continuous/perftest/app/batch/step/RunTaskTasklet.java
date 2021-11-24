@@ -24,9 +24,10 @@ public class RunTaskTasklet implements Tasklet {
 
         log.info(testName + " will be started."
                 + " starting Performance Test Job: " + stepExecutionContext.getString("partitionId"));
+        //TODO: ECS Fargate Run Task
 
         try {
-            Thread.sleep(10000);
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             log.error("InterruptedException");
             Thread.currentThread().interrupt();

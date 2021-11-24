@@ -1,8 +1,14 @@
+spring:
+  profiles:
+    active: dev
+
 cloud:
   aws:
     stack:
       auto: false
 
+bucket:
+  name: ma-furutanito-bucket
 amazon:
   dynamodb:
     region: ap-northeast-1
