@@ -79,9 +79,27 @@ Resources:
       Parameters:
         Prefix: !Ref Prefix
 
+  ECSTaskRoleStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./ecs-taskrole.yaml
+      Parameters:
+        Prefix: !Ref Prefix
+
+  ECSTaskDefinitionStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - ECSTaskRoleStack
+    Properties:
+      TemplateURL: ./ecs-task.yaml
+      Parameters:
+        Prefix: !Ref Prefix
+        ContainerImage: !Ref ContainerImage
+
   ECSClusterStack:
     Type: AWS::CloudFormation::Stack
-    DependsOn: NetworkStack
+    DependsOn:
+      - NetworkStack
     Properties:
       TemplateURL: ./ecs-cluster.yaml
       Parameters:
@@ -89,29 +107,13 @@ Resources:
         VPCId: !Ref VPCId
         Keypair: !Ref Keypair
 
-  ECSTaskDefinitionStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn:
-      - ECSClusterStack
-    Properties:
-      TemplateURL: ./ecs-task.yaml
-      Parameters:
-        Prefix: !Ref Prefix
-        ContainerImage: !Ref ContainerImage
-
-  ECSTaskRoleStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn:
-      - ECSTaskDefinitionStack
-    Properties:
-      TemplateURL: ./ecs-taskrole.yaml
-      Parameters:
-        Prefix: !Ref Prefix
-
   ECSServiceStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
+      - NetworkStack
+      - ECSClusterStack
       - ECSTaskRoleStack
+      - ECSTaskDefinitionStack
     Properties:
       TemplateURL: ./ecs-service.yaml
       Parameters:
