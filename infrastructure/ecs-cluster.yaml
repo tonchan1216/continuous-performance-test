@@ -28,6 +28,7 @@ Resources:
   ECSRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub ${Prefix}-EC2ContainerServiceRole
       Path: /
       AssumeRolePolicyDocument:
         Statement:
@@ -56,19 +57,20 @@ Resources:
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
+      AutoScalingGroupName : !Sub ${Prefix}-ecs-cluster-asg
       VPCZoneIdentifier:
         - Fn::ImportValue: !Sub ${Prefix}-PrivateSubnet1
         - Fn::ImportValue: !Sub ${Prefix}-PrivateSubnet2
         - Fn::ImportValue: !Sub ${Prefix}-PrivateSubnet3
       LaunchConfigurationName: !Ref ECSLaunchConfiguration
-      MinSize: 0
+      MinSize: 1
       MaxSize: 3
-      DesiredCapacity: 0
+      DesiredCapacity: 1
       Tags:
         - Key: Name
           Value: !Sub ${Prefix}-cluster
           PropagateAtLaunch: true
-        - Key: Own
+        - Key: Owner
           Value: !Sub ${Prefix}
           PropagateAtLaunch: true
     CreationPolicy:
@@ -91,6 +93,7 @@ Resources:
   ECSLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
+      LaunchConfigurationName : !Sub ${Prefix}-ECSLaunchConfiguration
       ImageId: !Ref ECSAMI
       InstanceType: t3.medium
       IamInstanceProfile: !Ref IamInstanceProfile

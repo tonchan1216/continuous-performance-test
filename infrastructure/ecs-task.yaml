@@ -20,6 +20,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       Path: /
+      RoleName: !Sub ${Prefix}-ECSTaskExecutionRole
       AssumeRolePolicyDocument:
         Statement:
           - Action: sts:AssumeRole
