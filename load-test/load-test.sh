@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 # set a uuid for the results xml file name in S3
 UUID=$(cat /proc/sys/kernel/random/uuid)
@@ -8,13 +8,12 @@ if [ $# -ne 2 ]; then
   exit 1
 fi
 
-TEST_ID=${1:-0001}
-TEST_NAME=${2:-scenario1}
+TEST_ID=${1}
+TEST_NAME=${2}
 SCRIPT="scripts/taurus.yaml"
-
+S3_DIR="s3://$S3_BUCKET/results/$TEST_ID"
 echo "TEST_ID:: ${TEST_ID}"
 echo "TEST_NAME:: ${TEST_NAME}"
-echo "S3_BUCKET ${S3_BUCKET}"
 echo "UUID ${UUID}"
 
 echo "Running test"
@@ -22,15 +21,8 @@ stdbuf -i0 -o0 -e0 bzt ${SCRIPT} -${TEST_NAME} | stdbuf -i0 -o0 -e0 tee -a resul
 CALCULATED_DURATION=`cat result.tmp | grep -m1 "Test duration" | awk -F ' ' '{ print $5 }' | awk -F ':' '{ print ($1 * 3600) + ($2 * 60) + $3 }'`
 
 echo "Upload results to S3"
-# every file goes under $TEST_ID/$PREFIX/$UUID to distinguish the result correctly
-ARTIFACTS_DIR=`cat result.tmp | grep -m1 "Artifacts dir" | awk -F ' ' '{ print $5 }'`
-REPORT_FILES=`find ${ARTIFACTS_DIR} -name "*.jtl" -or -name "simulation.log"`
-for f in "${REPORT_FILES[@]}"; do
-  p="s3://$S3_BUCKET/results/$TEST_ID/JMeter_Result/$UUID/`basename $f`"
-
-  echo "Uploading $p"
-  # aws s3 cp $f $p
-done
+LOGS_DIR=`cat result.tmp | grep -m1 "Artifacts dir" | awk -F ' ' '{ print $5 }'`
+aws s3 cp $LOGS_DIR $S3_DIR/logs/$UUID/ --exclude "*" --include "*.jtl" --include "simulation.log" --recursive
 
 if [ -f /tmp/artifacts/results.xml ]; then
   echo "Validating Test Duration"
@@ -42,7 +34,7 @@ if [ -f /tmp/artifacts/results.xml ]; then
   fi
 
   echo "Uploading results"
-  # aws s3 cp /tmp/artifacts/results.xml s3://$S3_BUCKET/results/${TEST_ID}/${PREFIX}-${UUID}.xml
+  aws s3 cp /tmp/artifacts/results.xml $S3_DIR/artifacts/$UUID.xml
 else
   echo "There might be an error happened while the test."
 fi
