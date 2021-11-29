@@ -16,15 +16,15 @@ import java.util.Map;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "testName",
+        "scenarioName",
         "clusterSize",
         "approval"
 })
 @Generated("jsonschema2pojo")
 public class Parameter {
 
-    @JsonProperty("testName")
-    public String testName;
+    @JsonProperty("scenarioName")
+    public String scenarioName;
     @JsonProperty("clusterSize")
     public String clusterSize;
     @JsonProperty("approval")

@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Import;
 public class SpringBatchApplication {
     public static void main(String[] args) {
         String inputParam = "param={" +
-                "\"testName\": \"scenario1\"," +
-                "\"clusterSize\": \"3\"," +
+                "\"scenarioName\": \"scenario1\"," +
+                "\"clusterSize\": \"1\"," +
                 "\"approval\": {" +
                 "\"pipelineName\": \"codepipeline\"," +
                 "\"stageName\": \"Approve\"," +

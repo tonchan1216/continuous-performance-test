@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
@@ -22,7 +23,7 @@ import org.springframework.core.task.TaskExecutor;
 
 import javax.sql.DataSource;
 
-@Import(BatchInfraConfig.class)
+@ComponentScan("org.maca.continuous.perftest.config")
 @Configuration
 @EnableBatchProcessing
 public class BatchAppConfig extends DefaultBatchConfigurer {
@@ -71,7 +72,7 @@ public class BatchAppConfig extends DefaultBatchConfigurer {
     protected Step partitionStep(){
         return stepBuilderFactory.get("partitionStep")
                 .partitioner(step2())
-                .partitioner("step2", partitioner(null))
+                .partitioner(step2().getName(), partitioner(null))
                 .taskExecutor(taskExecutor())
                 .build();
     }
