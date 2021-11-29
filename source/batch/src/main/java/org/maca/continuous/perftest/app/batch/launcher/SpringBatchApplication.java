@@ -12,7 +12,7 @@ public class SpringBatchApplication {
     public static void main(String[] args) {
         String inputParam = "param={" +
                 "\"scenarioName\": \"scenario1\"," +
-                "\"clusterSize\": \"1\"," +
+                "\"clusterSize\": \"3\"," +
                 "\"approval\": {" +
                 "\"pipelineName\": \"codepipeline\"," +
                 "\"stageName\": \"Approve\"," +

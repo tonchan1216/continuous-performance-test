@@ -47,21 +47,21 @@ public class RunTaskTasklet implements Tasklet {
         NetworkConfiguration networkConfiguration = new NetworkConfiguration().withAwsvpcConfiguration(awsVpcConfiguration);
         ContainerOverride containerOverride = new ContainerOverride()
                 .withName("ma-furutanito-load-test")
-                .withCommand(scenarioName, testId, partitionId);
+                .withCommand(testId, scenarioName);
         TaskOverride taskOverride = new TaskOverride().withContainerOverrides(containerOverride);
         RunTaskRequest request = new RunTaskRequest()
                 .withCluster("ma-furutanito-cluster")
-                .withTaskDefinition("ma-furutanito-load-test:10")
+                .withTaskDefinition("ma-furutanito-load-test:9")
                 .withLaunchType(LaunchType.FARGATE)
                 .withNetworkConfiguration(networkConfiguration)
-                .withOverrides(taskOverride);
+                .withOverrides(taskOverride)
+                .withTags(new Tag().withKey("TEST_ID").withValue(testId));
 
         RunTaskResult response = amazonECS.runTask(request);
 
         if (response.getFailures().size() > 0) {
             throw new Exception(response.getFailures().stream().map(Failure::getReason).collect(Collectors.toList()).toString());
         }
-        log.info(response.getTasks().stream().map(Task::getTaskArn).collect(Collectors.toList()).toString());
 
         return RepeatStatus.FINISHED;
     }

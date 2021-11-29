@@ -70,8 +70,8 @@ public class BatchAppConfig extends DefaultBatchConfigurer {
     @Bean
     protected Step partitionStep(){
         return stepBuilderFactory.get("partitionStep")
-                .partitioner(step2())
                 .partitioner(step2().getName(), partitioner(null))
+                .step(step2())
                 .taskExecutor(taskExecutor())
                 .build();
     }

@@ -1,5 +1,7 @@
 package org.maca.continuous.perftest.app.batch.step;
 
+import com.amazonaws.services.ecs.AmazonECS;
+import com.amazonaws.services.ecs.model.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +22,7 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,11 +38,17 @@ public class ResultTasklet implements Tasklet {
     @Value("#{jobExecutionContext['testId']}")
     private String testId;
 
+    @Value("#{jobExecutionContext['clusterSize']}")
+    private String clusterSize;
+
     @Autowired
     ResourceLoader resourceLoader;
 
     @Autowired
     private ResourcePatternResolver resolver;
+
+    @Autowired
+    AmazonECS amazonECS;
 
     @Autowired
     public void setupResolver(ApplicationContext applicationContext, AmazonS3 amazonS3){
@@ -53,8 +59,47 @@ public class ResultTasklet implements Tasklet {
     public RepeatStatus execute(StepContribution stepContribution,
                                 ChunkContext chunkContext) throws Exception {
         //TODO: ECS Fargate Polling
+        //Get FARGATE Task ARNs
+        ListTasksRequest listTasksRequest = new ListTasksRequest()
+                .withCluster("ma-furutanito-cluster")
+                .withFamily("ma-furutanito-load-test");
+        ListTasksResult familyTaskList = amazonECS.listTasks(listTasksRequest);
+
+        //Filtered FARGATE Task ARNs
+        DescribeTasksRequest initTasksRequest = new DescribeTasksRequest()
+                .withCluster("ma-furutanito-cluster")
+                .withTasks(familyTaskList.getTaskArns())
+                .withInclude("TAGS");
+        DescribeTasksResult initResponse = amazonECS.describeTasks(initTasksRequest);
+        List<String> filteredTaskArns = initResponse.getTasks().stream()
+                .filter(task -> task.getTags().contains(new Tag().withKey("TEST_ID").withValue(testId)))
+                .map(Task::getTaskArn)
+                .collect(Collectors.toList());
+
+        // Polling Task Status
+        DescribeTasksRequest pollingTasksRequest = new DescribeTasksRequest()
+                .withCluster("ma-furutanito-cluster")
+                .withTasks(filteredTaskArns);
+        Long totalCount = Long.parseLong(clusterSize);
+        while(true){
+            DescribeTasksResult pollingResponse = amazonECS.describeTasks(pollingTasksRequest);
+            Map<String, Long> countByStatus = pollingResponse.getTasks().stream()
+                    .collect(Collectors.groupingBy(Task::getLastStatus, Collectors.counting()));
+
+            log.info(countByStatus.toString());
+            if (Objects.nonNull(countByStatus.get("STOPPED")) && Objects.equals(countByStatus.get("STOPPED"), totalCount)) {
+                break;
+            }
+
+            try {
+                Thread.sleep(60000);
+            } catch (InterruptedException e) {
+                log.error(e.getMessage());
+            }
+        }
 
         //S3 Download
+        testId = "0003";
         Resource[] results = resolver.getResources(S3_BUCKET_PREFIX +
                 bucketName + DELIMITER +
                 DIRECTORY_PREFIX + DELIMITER +
@@ -73,7 +118,12 @@ public class ResultTasklet implements Tasklet {
         XmlMapper xmlMapper = new XmlMapper();
         List<FinalStatus> finalStatusList = new ArrayList<>();
         for (String s : resultList) {
+            log.info(s);
             finalStatusList.add(xmlMapper.readValue(s, FinalStatus.class));
+        }
+
+        if (finalStatusList.isEmpty()) {
+            throw new Exception("not result");
         }
 
         //Calculate Result
