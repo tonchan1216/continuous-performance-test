@@ -23,11 +23,26 @@ scenarios:
 
 reporting:
 - module: final-stats
-  summary: true  # overall samples count and percent of failures
-  percentiles: true  # display average times and percentiles
-  summary-labels: false # provides list of sample labels, status, percentage of completed, avg time and errors
-  test-duration: true  # provides test duration
+  summary: true
+  percentiles: true
+  summary-labels: false
+  test-duration: true
   dump-xml: /tmp/artifacts/results.xml
+  consolidator:
+    generalize-labels: 500    # support up to this number of labels
+    max-error-variety: 100    # max count of different error messages accepted (default: 100)
+    percentiles:
+    - 0.0
+    - 50.0
+    - 90.0
+    - 100.0
+- module: passfail
+  criteria:
+    Response time is too slow: p90 > 5s for 60s, continue as failed
+    Error Rate is too hight: failures > 50% for 60s, continue as failed
+
+settings:
+  ramp-up-exclude: true
 
 modules:
   console:

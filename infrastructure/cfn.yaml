@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template
+
+# ------------------------------------------------------------#
+# Input Parameters
+# ------------------------------------------------------------#
+Parameters:
+  Prefix:
+    Description: Prefix Name
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: ^[a-zA-Z][-a-zA-Z0-9]*$
+    Default: continuous-perftest
+  VPCCiderBlock:
+    Description: CiderBlock paramater for VPC
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    Default: 10.0.1.0/24
+  VPCId:
+    Description: VPC ID
+    Type: AWS::EC2::VPC::Id
+    Default: vpc
+  NeedS3Bucket:
+    Description: If you need create S3 Bucket, select true. You have already it, select false.
+    Type: String
+    Default : false
+    AllowedValues : [true, false]
+  Keypair:
+    Description: Keypair Name
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    Default: test
+  ContainerImage:
+    Description: Prefix Name
+    Type: String
+    MinLength: 1
+    Default: repository/name:tag
+
+
+Conditions:
+  CreateS3Resources: !Equals
+    - !Ref NeedS3Bucket
+    - true
+
+Resources:
+# ------------------------------------------------------------#
+# Nested Stack
+# ------------------------------------------------------------#
+  NetworkStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./network.yaml
+      Parameters:
+        VPCId: !Ref VPCId
+        VPCCiderBlock: !Ref VPCCiderBlock
+        Prefix: !Ref Prefix
+
+  S3Stack:
+    Type: AWS::CloudFormation::Stack
+    Condition: CreateS3Resources
+    Properties:
+      TemplateURL: ./s3.yaml
+      Parameters:
+        Prefix: !Ref Prefix
+
+  SQSStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./sqs.yaml
+
+  DynamoDBStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./dynamodb.yaml
+      Parameters:
+        Prefix: !Ref Prefix
+
+  ECSTaskRoleStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: ./ecs-taskrole.yaml
+      Parameters:
+        Prefix: !Ref Prefix
+
+  ECSTaskDefinitionStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - ECSTaskRoleStack
+    Properties:
+      TemplateURL: ./ecs-task.yaml
+      Parameters:
+        Prefix: !Ref Prefix
+        ContainerImage: !Ref ContainerImage
+
+  ECSClusterStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - NetworkStack
+    Properties:
+      TemplateURL: ./ecs-cluster.yaml
+      Parameters:
+        Prefix: !Ref Prefix
+        VPCId: !Ref VPCId
+        Keypair: !Ref Keypair
+
+  ECSServiceStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - NetworkStack
+      - ECSClusterStack
+      - ECSTaskRoleStack
+      - ECSTaskDefinitionStack
+    Properties:
+      TemplateURL: ./ecs-service.yaml
+      Parameters:
+        Prefix: !Ref Prefix

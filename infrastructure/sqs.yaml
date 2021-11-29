@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: SQS Definition
+
+Parameters:
+  Prefix:
+    Description: Prefix Name
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: ^[a-zA-Z][-a-zA-Z0-9]*$
+    Default: continuous-perftest
+
+Resources:
+  SQSQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub ${Prefix}-queue
+      VisibilityTimeout: 30
+      DelaySeconds: 5
+      MaximumMessageSize: 26144
+      MessageRetentionPeriod: 345600
+      ReceiveMessageWaitTimeSeconds: 0
+
+Outputs:
+  SQSServiceEndpoint:
+    Description: SQS service endipoint
+    Value: !Sub https://sqs.${AWS::Region}.amazonaws.com
+    Export:
+      Name: SQS-ServiceEndpoint
+
+  SQSServiceRegion:
+    Description: SQS service region
+    Value: !Sub ${AWS::Region}
+    Export:
+      Name: SQS-Region
+
+  SQSQueue:
+    Description: SQS  queue name
+    Value: !Ref SQSQueue
+    Export:
+      Name: SQS-Name

@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Service Launch
+
+Parameters:
+  Prefix:
+    Description: Prefix Name
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: ^[a-zA-Z][-a-zA-Z0-9]*$
+    Default: continuous-perftest
+
+Resources:
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: !Sub ${Prefix}-ECSTaskRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+
+  CloudFormationAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-CloudFormationAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "cloudformation:*"
+            Resource: "*"
+      Roles:
+        - !Ref ECSTaskRole
+
+  SQSAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-SQSAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "sqs:*"
+            Resource: "*"
+      Roles:
+        - !Ref ECSTaskRole
+
+  DynamoDBAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-DynamoDBAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "dynamodb:*"
+            Resource: "*"
+      Roles:
+        - !Ref ECSTaskRole
+
+  S3AccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-S3AccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "s3:*"
+            Resource: "*"
+      Roles:
+        - !Ref ECSTaskRole
+
+  SSMAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-SSMAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "ssm:*"
+            Resource: "*"
+      Roles:
+        - !Ref ECSTaskRole
+
+Outputs:
+  ECSTaskRole:
+    Description:  ECS Task has role
+    Value: !GetAtt ECSTaskRole.Arn
+    Export:
+      Name: !Sub ${Prefix}-ECSTaskRole

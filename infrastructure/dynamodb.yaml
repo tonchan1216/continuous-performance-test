@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: DynamoDB Definition depends on network.yaml
+
+Parameters:
+  Prefix:
+    Description: Prefix Name
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: ^[a-zA-Z][-a-zA-Z0-9]*$
+    Default: continuous-perftest
+
+Resources:
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub ${Prefix}-runner-status
+      BillingMode: PROVISIONED
+      SSESpecification: !Ref "AWS::NoValue"
+      KeySchema:
+        - AttributeName: testId
+          KeyType: HASH
+      AttributeDefinitions:
+        - AttributeName: testId
+          AttributeType: S
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+Outputs:
+  EnvironmentRegion:
+    Description: Dev Environment Region
+    Value: !Sub ${AWS::Region}
+    Export:
+      Name: DynamoDB-Region
+  DynamoDBServiceEndpoint:
+    Description: DynamoDB service endipoint
+    Value: !Sub https://dynamodb.${AWS::Region}.amazonaws.com
+    Export:
+      Name: ServiceEndpoint
+  DynamoDBTable:
+    Description: DynamoDB Table
+    Value: !Ref DynamoDBTable
+    Export:
+      Name: !Sub ${Prefix}-Table

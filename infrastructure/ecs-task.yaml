@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Task Definition
+
+Parameters:
+  Prefix:
+    Description: Prefix Name
+    Type: String
+    MinLength: 1
+    MaxLength: 255
+    AllowedPattern: ^[a-zA-Z][-a-zA-Z0-9]*$
+    Default: continuous-perftest
+  ContainerImage:
+    Description: Prefix Name
+    Type: String
+    MinLength: 1
+    Default: repository/name:tag
+
+Resources:
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: !Sub ${Prefix}-ECSTaskExecutionRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+        - arn:aws:iam::aws:policy/SecretsManagerReadWrite
+
+  ConsumerECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${Prefix}-consumer
+      RequiresCompatibilities:
+        - EC2
+      Memory: 1024
+      Cpu: 512
+      NetworkMode: bridge
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn:
+        Fn::ImportValue: !Sub ${Prefix}-ECSTaskRole
+      ContainerDefinitions:
+        - Name: !Sub ${Prefix}-consumer
+          Image: !Ref ContainerImage
+          Memory: 1024
+          Environment:
+            - Name: ENV_TYPE
+              Value: performance
+
+  LoadECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${Prefix}-load-test
+      RequiresCompatibilities:
+        - EC2
+      Memory: 1024
+      Cpu: 512
+      NetworkMode: bridge
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn:
+        Fn::ImportValue: !Sub ${Prefix}-ECSTaskRole
+      ContainerDefinitions:
+        - Name: !Sub ${Prefix}-load-test
+          Image: !Ref ContainerImage
+          Memory: 1024
+          Environment:
+            - Name: ENV_TYPE
+              Value: performance
+
+Outputs:
+  ConsumerECSTaskDefinition:
+    Description:  ECS Task Definition
+    Value: !Ref ConsumerECSTaskDefinition
+    Export:
+      Name: !Sub ${Prefix}-ConsumerECSTaskDefinition
+  LoadECSTaskDefinition:
+    Description:  ECS Task Definition
+    Value: !Ref LoadECSTaskDefinition
+    Export:
+      Name: !Sub ${Prefix}-LoadECSTaskDefinition
