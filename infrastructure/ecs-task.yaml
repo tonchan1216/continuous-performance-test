@@ -9,7 +9,12 @@ Parameters:
     MaxLength: 255
     AllowedPattern: ^[a-zA-Z][-a-zA-Z0-9]*$
     Default: continuous-perftest
-  ContainerImage:
+  ConsumerContainerImage:
+    Description: Prefix Name
+    Type: String
+    MinLength: 1
+    Default: repository/name:tag
+  LoadContainerImage:
     Description: Prefix Name
     Type: String
     MinLength: 1
@@ -46,7 +51,7 @@ Resources:
         Fn::ImportValue: !Sub ${Prefix}-ECSTaskRole
       ContainerDefinitions:
         - Name: !Sub ${Prefix}-consumer
-          Image: !Ref ContainerImage
+          Image: !Ref ConsumerContainerImage
           Memory: 1024
           Environment:
             - Name: ENV_TYPE
@@ -57,20 +62,21 @@ Resources:
     Properties:
       Family: !Sub ${Prefix}-load-test
       RequiresCompatibilities:
+        - FARGATE
         - EC2
       Memory: 1024
       Cpu: 512
-      NetworkMode: bridge
+      NetworkMode: awsvpc
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
       TaskRoleArn:
         Fn::ImportValue: !Sub ${Prefix}-ECSTaskRole
       ContainerDefinitions:
         - Name: !Sub ${Prefix}-load-test
-          Image: !Ref ContainerImage
+          Image: !Ref LoadContainerImage
           Memory: 1024
           Environment:
-            - Name: ENV_TYPE
-              Value: performance
+            - Name: S3_BUCKET
+              Value: !Sub ${Prefix}-bucket
 
 Outputs:
   ConsumerECSTaskDefinition:
