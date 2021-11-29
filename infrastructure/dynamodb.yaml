@@ -14,19 +14,15 @@ Resources:
   DynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: "sample"
+      TableName: !Sub ${Prefix}-runner-status
       BillingMode: PROVISIONED
       SSESpecification: !Ref "AWS::NoValue"
-      AttributeDefinitions:
-        - AttributeName: samplePartitionKey
-          AttributeType: S
-        - AttributeName: sampleSortKey
-          AttributeType: S
       KeySchema:
-        - AttributeName: samplePartitionKey
+        - AttributeName: testId
           KeyType: HASH
-        - AttributeName: sampleSortKey
-          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: testId
+          AttributeType: S
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
