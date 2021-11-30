@@ -25,7 +25,7 @@ echo "UUID ${UUID}"
 echo "Running test"
 stdbuf -i0 -o0 -e0 bzt ${SCRIPT} -${TEST_NAME} ${OPTIONS} | stdbuf -i0 -o0 -e0 tee -a result.tmp | sed -u -e "s|^|$TEST_ID |"
 BZT_EXIT_CODE=$?
-if [ $BZT_EXIT_CODE -ne 0 ]; then
+if [ $BZT_EXIT_CODE -ne 0 -a $BZT_EXIT_CODE -ne 3 ]; then
   echo "Stopping test with exit code: ${BZT_EXIT_CODE}"
   exit $BZT_EXIT_CODE
 fi
