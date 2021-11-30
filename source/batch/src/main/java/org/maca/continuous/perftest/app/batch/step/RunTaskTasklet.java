@@ -36,9 +36,9 @@ public class RunTaskTasklet implements Tasklet {
                                 ChunkContext chunkContext) throws Exception {
         //Get Partition ID
         ExecutionContext stepExecutionContext = stepExecution.getExecutionContext();
-        String partitionId  = stepExecutionContext.getString("partitionId");
+        int partitionId  = stepExecutionContext.getInt("partitionId");
         log.info(scenarioName + " will be started."
-                + "starting Performance Test Job: " + partitionId);
+                + "starting Performance Test Job: partition " + partitionId);
 
         // ECS Fargate Run Task
         AwsVpcConfiguration awsVpcConfiguration = new AwsVpcConfiguration()
@@ -58,7 +58,7 @@ public class RunTaskTasklet implements Tasklet {
                 .withTags(new Tag().withKey("TEST_ID").withValue(testId));
         RunTaskResult response = amazonECS.runTask(request);
 
-        if (response.getFailures().size() > 0) {
+        if (!response.getFailures().isEmpty()) {
             throw new Exception(response.getFailures().stream().map(Failure::getReason).collect(Collectors.toList()).toString());
         }
 

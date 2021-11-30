@@ -7,6 +7,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.maca.continuous.perftest.app.model.*;
+import org.maca.continuous.perftest.domain.model.RunnerStatus;
 import org.maca.continuous.perftest.domain.service.RunnerStatusService;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -65,6 +66,8 @@ public class ResultTasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution stepContribution,
                                 ChunkContext chunkContext) throws Exception {
+        Date endTime;
+
         //Get FARGATE Task ARNs
         ListTasksRequest listTasksRequest = new ListTasksRequest()
                 .withCluster("ma-furutanito-cluster")
@@ -92,6 +95,7 @@ public class ResultTasklet implements Tasklet {
                 Thread.sleep(60000);
             } catch (InterruptedException e) {
                 log.error(e.getMessage());
+                Thread.currentThread().interrupt();
             }
 
             DescribeTasksResult pollingResponse = amazonECS.describeTasks(pollingTasksRequest);
@@ -100,6 +104,7 @@ public class ResultTasklet implements Tasklet {
 
             log.info(countByStatus.toString());
             if (Objects.nonNull(countByStatus.get("STOPPED")) && Objects.equals(countByStatus.get("STOPPED"), totalCount)) {
+                endTime = new Date();
                 break;
             }
         }
@@ -110,6 +115,11 @@ public class ResultTasklet implements Tasklet {
                 DIRECTORY_PREFIX + DELIMITER +
                 testId + DELIMITER +
                 ARTIFACT_DIRECTORY_SUFFIX  + "/*/results.xml");
+
+        if (results.length == 0) {
+            throw new Exception("no result Resources");
+        }
+
         String[] resultList = new String[results.length];
         for(int i = 0; i < results.length; i++){
             try(InputStream inputStream = results[i].getInputStream()){
@@ -123,7 +133,6 @@ public class ResultTasklet implements Tasklet {
         XmlMapper xmlMapper = new XmlMapper();
         List<FinalStatus> finalStatusList = new ArrayList<>();
         for (String s : resultList) {
-            log.info(s);
             finalStatusList.add(xmlMapper.readValue(s, FinalStatus.class));
         }
 
@@ -165,15 +174,15 @@ public class ResultTasklet implements Tasklet {
                 .build();
         log.info(result.toString());
 
-        //TODO: DynamoDB Update
-        runnerStatusService.updateRunnerStatus(
-                RunnerStatusModelMapper.map(RunnerStatusModel.builder()
-                        .testId(testId)
-                        .clusterSize(clusterSize)
-                        .scenarioName(scenarioName)
-                        .build()
-                )
-        );
+        // DynamoDB Update
+        RunnerStatus runnerStatus = RunnerStatus.builder()
+                .testId(testId)
+                .status("complete")
+                .completeTasks(filteredTaskArns)
+                .endTime(endTime)
+                .result(result.toString())
+                .build();
+        runnerStatusService.updateRunnerStatus(runnerStatus);
 
         return RepeatStatus.FINISHED;
     }

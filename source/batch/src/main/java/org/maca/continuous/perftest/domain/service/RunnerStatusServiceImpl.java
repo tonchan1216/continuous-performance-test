@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class RunnerStatusServiceImpl implements RunnerStatusService {
@@ -28,7 +27,6 @@ public class RunnerStatusServiceImpl implements RunnerStatusService {
 
     @Override
     public RunnerStatus addRunnerStatus(RunnerStatus runnerStatus){
-        runnerStatus.setTestId(UUID.randomUUID().toString());
         return runnerStatusRepository.save(runnerStatus);
     }
 

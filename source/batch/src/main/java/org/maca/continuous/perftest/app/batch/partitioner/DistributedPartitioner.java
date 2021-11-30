@@ -24,7 +24,7 @@ public class DistributedPartitioner implements Partitioner {
 
         for (int i = 0; i < clusterSize; i++) {
             ExecutionContext executionContext = new ExecutionContext();
-            executionContext.putString("partitionId", "runner"+i);
+            executionContext.putInt("partitionId", i + 1);
             executionContextMap.put("partition" + i, executionContext);
         }
 
