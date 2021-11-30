@@ -1,18 +1,18 @@
 cli-aliases:
   scenario1:
     execution:
-    - concurrency: 1
-      ramp-up: 10s
-      hold-for: 10s
-      executor: jmeter
-      scenario: test1
+      - concurrency: 1
+        ramp-up: 10s
+        hold-for: 60s
+        executor: jmeter
+        scenario: test1
   scenario2:
     execution:
-    - concurrency: 1
-      ramp-up: 10s
-      hold-for: 10s
-      executor: gatling
-      scenario: test2
+      - concurrency: 1
+        ramp-up: 10s
+        hold-for: 60s
+        executor: gatling
+        scenario: test2
 
 scenarios:
   test1:
@@ -22,27 +22,25 @@ scenarios:
     simulation: tests.gatling.BasicSimulation
 
 reporting:
-- module: final-stats
-  summary: true
-  percentiles: true
-  summary-labels: false
-  test-duration: true
-  dump-xml: /tmp/artifacts/results.xml
-  consolidator:
-    generalize-labels: 500    # support up to this number of labels
-    max-error-variety: 100    # max count of different error messages accepted (default: 100)
-    percentiles:
-    - 0.0
-    - 50.0
-    - 90.0
-    - 100.0
-- module: passfail
-  criteria:
-    Response time is too slow: p90 > 5s for 60s, continue as failed
-    Error Rate is too hight: failures > 50% for 60s, continue as failed
+  - module: final-stats
+    summary: true
+    percentiles: true
+    summary-labels: false
+    test-duration: true
+    dump-xml: /tmp/artifacts/results.xml
+  - module: passfail
+    criteria:
+      response time: p90 > 0.05s for 10s, continue as failed
+      error rate: failures < 50% for 60s, continue as failed
+  - module: junit-xml
+    filename: /tmp/artifacts/pass-fail.xml
+    data-source: pass-fail
 
 settings:
   ramp-up-exclude: true
+  env:
+    CLUSTER_SIZE: 1
+    PARTITION_ID: 1
 
 modules:
   console:
@@ -56,3 +54,11 @@ modules:
       log_level.JMeter.threads: WARN
     system-properties:
       org.apache.commons.logging.simplelog.log.org.apache.http: WARN
+  consolidator:
+    generalize-labels: 500 # support up to this number of labels
+    max-error-variety: 100 # max count of different error messages accepted (default: 100)
+    percentiles:
+      - 0.0
+      - 50.0
+      - 90.0
+      - 100.0

@@ -1,5 +1,7 @@
 FROM blazemeter/taurus
-RUN apt-get -y install xmlstarlet bc
+RUN apt-get -y install xmlstarlet bc && \
+  apt-get -y clean && \
+  rm -rf /var/lib/apt/lists/*
 
 # Taurus working directory  = /bzt-configs
 ADD ./load-test.sh /bzt-configs/
