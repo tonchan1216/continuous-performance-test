@@ -8,8 +8,16 @@ cloud:
       auto: false
 
 bucket:
-  name: ma-furutanito-bucket
+  name: {S3_BUCKET}
 amazon:
   dynamodb:
     region: ap-northeast-1
     endpoint: https://dynamodb.ap-northeast-1.amazonaws.com
+
+ecs:
+  cluster: {ECS_CLUSTER}
+  taskDefinition: {TASK_DEFINITION}
+  containerName: {CONTAINER_NAME}
+  subnetIds: {SUBNET_ID}
+  securityGroup: {SECURITY_GROUP}
+  pollingInterval: 60000

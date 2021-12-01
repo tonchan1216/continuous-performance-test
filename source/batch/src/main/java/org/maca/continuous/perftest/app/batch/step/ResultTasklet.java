@@ -3,6 +3,7 @@ package org.maca.continuous.perftest.app.batch.step;
 import com.amazonaws.services.ecs.AmazonECS;
 import com.amazonaws.services.ecs.model.*;
 import com.amazonaws.services.s3.AmazonS3;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -37,11 +38,17 @@ public class ResultTasklet implements Tasklet {
     @Value("${bucket.name}")
     private String bucketName;
 
+    @Value("${ecs.pollingInterval}")
+    private String pollingInterval;
+
+    @Value("${ecs.cluster}")
+    private String cluster;
+
+    @Value("${ecs.taskDefinition}")
+    private String taskDefinition;
+
     @Value("#{jobExecutionContext['clusterSize']}")
     private String clusterSize;
-
-    @Value("#{jobExecutionContext['scenarioName']}")
-    private String scenarioName;
 
     @Value("#{jobExecutionContext['testId']}")
     private String testId;
@@ -70,13 +77,13 @@ public class ResultTasklet implements Tasklet {
 
         //Get FARGATE Task ARNs
         ListTasksRequest listTasksRequest = new ListTasksRequest()
-                .withCluster("ma-furutanito-cluster")
-                .withFamily("ma-furutanito-load-test");
+                .withCluster(cluster)
+                .withFamily(taskDefinition);
         ListTasksResult familyTaskList = amazonECS.listTasks(listTasksRequest);
 
         //Filtered FARGATE Task ARNs
         DescribeTasksRequest initTasksRequest = new DescribeTasksRequest()
-                .withCluster("ma-furutanito-cluster")
+                .withCluster(cluster)
                 .withTasks(familyTaskList.getTaskArns())
                 .withInclude("TAGS");
         DescribeTasksResult initResponse = amazonECS.describeTasks(initTasksRequest);
@@ -87,12 +94,12 @@ public class ResultTasklet implements Tasklet {
 
         // Polling Task Status
         DescribeTasksRequest pollingTasksRequest = new DescribeTasksRequest()
-                .withCluster("ma-furutanito-cluster")
+                .withCluster(cluster)
                 .withTasks(filteredTaskArns);
         Long totalCount = Long.parseLong(clusterSize);
         while(true){
             try {
-                Thread.sleep(60000);
+                Thread.sleep(Integer.parseInt(pollingInterval));
             } catch (InterruptedException e) {
                 log.error(e.getMessage());
                 Thread.currentThread().interrupt();
@@ -166,22 +173,22 @@ public class ResultTasklet implements Tasklet {
                         .map(Group::getAvgResponseTime)
                         .mapToDouble(TimeMetrics::getValue)
                         .average().orElse(0.0))
-                .perc_90(grpByLabel.stream()
+                .perc90(grpByLabel.stream()
                         .map(Group::getPercentiles)
                         .flatMap(Collection::stream)
                         .filter(p -> p.getParam().equals("90.0"))
                         .collect(Collectors.averagingDouble(Percentile::getValue)))
                 .build();
-        log.info(result.toString());
+        ObjectMapper mapper = new ObjectMapper();
+        String resultJson = mapper.writeValueAsString(result);
+        log.info(resultJson);
 
         // DynamoDB Update
-        RunnerStatus runnerStatus = RunnerStatus.builder()
-                .testId(testId)
-                .status("complete")
-                .completeTasks(filteredTaskArns)
-                .endTime(endTime)
-                .result(result.toString())
-                .build();
+        RunnerStatus runnerStatus = runnerStatusService.getRunnerStatus(testId);
+        runnerStatus.setStatus("complete");
+        runnerStatus.setCompleteTasks(filteredTaskArns);
+        runnerStatus.setResult(resultJson);
+        runnerStatus.setEndTime(endTime);
         runnerStatusService.updateRunnerStatus(runnerStatus);
 
         return RepeatStatus.FINISHED;

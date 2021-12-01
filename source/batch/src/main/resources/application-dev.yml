@@ -7,6 +7,16 @@ cloud:
       auto: false
       static: ap-northeast-1
 
+bucket:
+  name: ma-furutanito-bucket
+
+ecs:
+  cluster: ma-furutanito-cluster
+  taskDefinition: ma-furutanito-load-test
+  containerName: ma-furutanito-load-test
+  subnetIds: subnet-02fb5c9a3dceb48c1,subnet-0e4f80cf9f14633fb,subnet-0c0846166e3f8600f
+  securityGroup: sg-0fc69388b99eb3893
+
 logging:
   level:
     com:

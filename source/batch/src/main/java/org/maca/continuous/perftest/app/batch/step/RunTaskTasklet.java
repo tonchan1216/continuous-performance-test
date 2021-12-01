@@ -16,6 +16,21 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class RunTaskTasklet implements Tasklet {
+    @Value("${ecs.cluster}")
+    private String cluster;
+
+    @Value("${ecs.taskDefinition}")
+    private String taskDefinition;
+
+    @Value("${ecs.containerName}")
+    private String containerName;
+
+    @Value("${ecs.subnetIds}")
+    private String subnetIds;
+
+    @Value("${ecs.securityGroup}")
+    private String securityGroup;
+
     @Value("#{stepExecution}")
     private StepExecution stepExecution;
 
@@ -41,17 +56,18 @@ public class RunTaskTasklet implements Tasklet {
                 + "starting Performance Test Job: partition " + partitionId);
 
         // ECS Fargate Run Task
+        String[] subnetList = subnetIds.split(",");
         AwsVpcConfiguration awsVpcConfiguration = new AwsVpcConfiguration()
-                .withSubnets("subnet-02fb5c9a3dceb48c1")
-                .withSecurityGroups("sg-0fc69388b99eb3893");
+                .withSubnets(subnetList[partitionId % subnetList.length]) // round-robin AZ subnet
+                .withSecurityGroups(securityGroup);
         NetworkConfiguration networkConfiguration = new NetworkConfiguration().withAwsvpcConfiguration(awsVpcConfiguration);
         ContainerOverride containerOverride = new ContainerOverride()
-                .withName("ma-furutanito-load-test")
+                .withName(containerName)
                 .withCommand(testId, scenarioName, "-o settings.env.CLUSTER_SIZE=" + clusterSize, "-o settings.env.PARTITION_ID=" + partitionId);
         TaskOverride taskOverride = new TaskOverride().withContainerOverrides(containerOverride);
         RunTaskRequest request = new RunTaskRequest()
-                .withCluster("ma-furutanito-cluster")
-                .withTaskDefinition("ma-furutanito-load-test")
+                .withCluster(cluster)
+                .withTaskDefinition(taskDefinition)
                 .withLaunchType(LaunchType.FARGATE)
                 .withNetworkConfiguration(networkConfiguration)
                 .withOverrides(taskOverride)
