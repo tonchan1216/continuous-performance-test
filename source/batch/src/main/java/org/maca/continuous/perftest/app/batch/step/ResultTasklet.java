@@ -8,6 +8,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.maca.continuous.perftest.app.model.*;
+import org.maca.continuous.perftest.domain.model.PrimaryKey;
 import org.maca.continuous.perftest.domain.model.RunnerStatus;
 import org.maca.continuous.perftest.domain.service.RunnerStatusService;
 import org.springframework.batch.core.StepContribution;
@@ -52,6 +53,9 @@ public class ResultTasklet implements Tasklet {
 
     @Value("#{jobExecutionContext['testId']}")
     private String testId;
+
+    @Value("#{jobExecutionContext['startTime']}")
+    private Date startTime;
 
     @Autowired
     ResourceLoader resourceLoader;
@@ -184,7 +188,8 @@ public class ResultTasklet implements Tasklet {
         log.info(resultJson);
 
         // DynamoDB Update
-        RunnerStatus runnerStatus = runnerStatusService.getRunnerStatus(testId);
+        PrimaryKey primaryKey = PrimaryKey.builder().testId(testId).startTime(startTime).build();
+        RunnerStatus runnerStatus = runnerStatusService.getRunnerStatus(primaryKey);
         runnerStatus.setStatus("complete");
         runnerStatus.setCompleteTasks(filteredTaskArns);
         runnerStatus.setResult(resultJson);

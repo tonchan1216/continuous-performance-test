@@ -30,11 +30,12 @@ public class InputTasklet implements Tasklet {
         Parameter parameter = mapper.readValue(param, Parameter.class);
 
         // DynamoDB INSERT
+        Date startTime = new Date();
         RunnerStatus runnerStatus = runnerStatusService.addRunnerStatus(
                 RunnerStatus.builder()
                         .scenarioName(parameter.scenarioName)
                         .clusterSize(parameter.clusterSize)
-                        .startTime(new Date())
+                        .startTime(startTime)
                         .status("running")
                         .build()
         );
@@ -44,6 +45,7 @@ public class InputTasklet implements Tasklet {
         jobExecutionContext.put("clusterSize", parameter.clusterSize);
         jobExecutionContext.put("scenarioName", parameter.scenarioName);
         jobExecutionContext.put("testId", runnerStatus.getTestId());
+        jobExecutionContext.put("startTime", startTime);
 
         return RepeatStatus.FINISHED;
     }

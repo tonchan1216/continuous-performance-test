@@ -9,7 +9,9 @@ cloud:
 
 bucket:
   name: ma-furutanito-bucket
-
+amazon:
+  dynamodb:
+    table: ma-furutanito-runner-status
 ecs:
   cluster: ma-furutanito-cluster
   taskDefinition: ma-furutanito-load-test

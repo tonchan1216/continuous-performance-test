@@ -1,11 +1,12 @@
 package org.maca.continuous.perftest.domain.service;
 
+import org.maca.continuous.perftest.domain.model.PrimaryKey;
 import org.maca.continuous.perftest.domain.model.RunnerStatus;
 
 import java.util.List;
 
 public interface RunnerStatusService {
-    RunnerStatus getRunnerStatus(String testId);
+    RunnerStatus getRunnerStatus(PrimaryKey primaryKey);
 
     List<RunnerStatus> getRunnerStatus();
 
@@ -13,5 +14,5 @@ public interface RunnerStatusService {
 
     RunnerStatus updateRunnerStatus(RunnerStatus runnerStatus);
 
-    RunnerStatus deleteRunnerStatus(String testId);
+    RunnerStatus deleteRunnerStatus(PrimaryKey primaryKey);
 }
