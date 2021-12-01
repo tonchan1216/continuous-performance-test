@@ -7,10 +7,10 @@ import org.maca.continuous.perftest.domain.service.RunnerStatusService;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListenerSupport;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class Listener extends JobExecutionListenerSupport {
@@ -33,17 +33,15 @@ public class Listener extends JobExecutionListenerSupport {
         log.error("This job has occurred some exceptions as follow. " +
                         "[job-name:{}] [size:{}]",
                 jobExecution.getJobInstance().getJobName(), exceptions.size());
-        exceptions.forEach(th -> log.error("exception has occurred in job.", th));
+        exceptions.forEach(th -> log.error(th.getMessage()));
 
         String testId = jobExecution.getExecutionContext().getString("testId");
         Date startTime = (Date) jobExecution.getExecutionContext().get("startTime");
         PrimaryKey primaryKey = PrimaryKey.builder().testId(testId).startTime(startTime).build();
         RunnerStatus runnerStatus = runnerStatusService.getRunnerStatus(primaryKey);
         runnerStatus.setStatus("failed");
-        runnerStatus.setErrorReason(exceptions.toString());
+        runnerStatus.setErrorReason(exceptions.stream().map(Throwable::getMessage).collect(Collectors.toList()).toString());
         runnerStatus.setEndTime(new Date());
         runnerStatusService.updateRunnerStatus(runnerStatus);
-
-
     }
 }

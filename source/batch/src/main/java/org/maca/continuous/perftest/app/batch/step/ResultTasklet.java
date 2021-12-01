@@ -122,7 +122,7 @@ public class ResultTasklet implements Tasklet {
                 Map<Integer, Long> exitCodeList = pollingResponse.getTasks().stream()
                         .flatMap(task -> task.getContainers().stream())
                         .collect(Collectors.groupingBy(Container::getExitCode, Collectors.counting()));
-                if (exitCodeList.get(0) < totalCount) {
+                if (Objects.isNull(exitCodeList.get(0)) || exitCodeList.get(0) < totalCount) {
                     throw new Exception("Load test containers terminated abnormally.");
                 }
 
