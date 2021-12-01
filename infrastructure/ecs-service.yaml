@@ -21,10 +21,3 @@ Resources:
         Fn::ImportValue: !Sub ${Prefix}-ConsumerECSTaskDefinition
       LaunchType: EC2
       ServiceName: !Sub ${Prefix}-consumer-service
-
-Outputs:
-  ECSService:
-    Description:  ECS Service
-    Value: !Ref ECSService
-    Export:
-      Name: !Sub ${Prefix}-ECSService

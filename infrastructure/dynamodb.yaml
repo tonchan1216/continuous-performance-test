@@ -20,8 +20,12 @@ Resources:
       KeySchema:
         - AttributeName: testId
           KeyType: HASH
+        - AttributeName: startTime
+          KeyType: RANGE
       AttributeDefinitions:
         - AttributeName: testId
+          AttributeType: S
+        - AttributeName: startTime
           AttributeType: S
       ProvisionedThroughput:
         ReadCapacityUnits: 5
