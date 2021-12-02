@@ -36,16 +36,16 @@ public class ResultTasklet implements Tasklet {
     private static final String DIRECTORY_PREFIX = "results";
     private static final String ARTIFACT_DIRECTORY_SUFFIX = "artifacts";
 
-    @Value("${bucket.name}")
+    @Value("${amazon.s3.bucketName}")
     private String bucketName;
 
-    @Value("${ecs.pollingInterval}")
+    @Value("${amazon.ecs.pollingInterval}")
     private String pollingInterval;
 
-    @Value("${ecs.cluster}")
+    @Value("${amazon.ecs.cluster}")
     private String cluster;
 
-    @Value("${ecs.taskDefinition}")
+    @Value("${amazon.ecs.taskDefinition}")
     private String taskDefinition;
 
     @Value("#{jobExecutionContext['clusterSize']}")

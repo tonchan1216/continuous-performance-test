@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 @EnableDynamoDBRepositories(basePackages = "org.maca.continuous.perftest.domain.repository")
 public class DynamoDBConfig {
-    @Value("${amazon.dynamodb.region}")
+    @Value("${amazon.region}")
     private String region;
     @Value("${amazon.dynamodb.endpoint}")
     private String endpoint;
