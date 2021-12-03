@@ -1,32 +1,31 @@
 package org.maca.continuous.perftest.app.model;
 
-import com.fasterxml.jackson.annotation.*;
+import java.util.HashMap;
+import java.util.Map;
+import javax.annotation.Generated;
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.annotation.Generated;
-import java.util.HashMap;
-import java.util.Map;
+import org.maca.continuous.perftest.common.app.model.Approval;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-        "scenarioName",
-        "clusterSize",
-        "approval"
-})
 @Generated("jsonschema2pojo")
-public class Parameter {
+public class Message {
 
-    @JsonProperty("scenarioName")
-    public String scenarioName;
-    @JsonProperty("clusterSize")
-    public String clusterSize;
+    @JsonProperty("region")
+    public String region;
+    @JsonProperty("consoleLink")
+    public String consoleLink;
     @JsonProperty("approval")
     public Approval approval;
     @JsonIgnore
@@ -41,4 +40,5 @@ public class Parameter {
     public void setAdditionalProperty(String name, Object value) {
         this.additionalProperties.put(name, value);
     }
+
 }

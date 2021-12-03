@@ -1,8 +1,9 @@
 package org.maca.continuous.perftest.app.batch.step;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.maca.continuous.perftest.common.app.model.Parameter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.maca.continuous.perftest.app.model.Parameter;
 import org.maca.continuous.perftest.domain.model.RunnerStatus;
 import org.maca.continuous.perftest.domain.service.RunnerStatusService;
 import org.springframework.batch.core.StepContribution;
@@ -22,12 +23,13 @@ public class InputTasklet implements Tasklet {
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution,
-                                ChunkContext chunkContext) throws Exception {
+                                ChunkContext chunkContext) throws JsonProcessingException {
         //Get Parameters from SQS
         StepExecution stepExecution = chunkContext.getStepContext().getStepExecution();
         String param = stepExecution.getJobParameters().getString("param");
+        Parameter parameter;
         ObjectMapper mapper = new ObjectMapper();
-        Parameter parameter = mapper.readValue(param, Parameter.class);
+        parameter = mapper.readValue(param, Parameter.class);
 
         // DynamoDB INSERT
         Date startTime = new Date();
