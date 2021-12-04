@@ -114,3 +114,8 @@ Outputs:
     Value: !Ref ECSCluster
     Export:
       Name: !Sub ${Prefix}-EcsCluster
+  ECSClusterSecurotyGroup:
+    Description: Security Group of ECS Cluster
+    Value: !Ref SecurityGroupEcsCluster
+    Export:
+      Name: !Sub ${Prefix}-EcsClusterSg
