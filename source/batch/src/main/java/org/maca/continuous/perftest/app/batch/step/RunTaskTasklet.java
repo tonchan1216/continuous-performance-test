@@ -75,13 +75,14 @@ public class RunTaskTasklet implements Tasklet {
                 .withName(containerName)
                 .withCommand(command);
         TaskOverride taskOverride = new TaskOverride().withContainerOverrides(containerOverride);
+        Tag tags = new Tag().withKey("TEST_ID").withValue(testId);
         RunTaskRequest request = new RunTaskRequest()
                 .withCluster(cluster)
                 .withTaskDefinition(taskDefinition)
                 .withLaunchType(LaunchType.FARGATE)
                 .withNetworkConfiguration(networkConfiguration)
                 .withOverrides(taskOverride)
-                .withTags(new Tag().withKey("TEST_ID").withValue(testId));
+                .withTags(tags);
 
         // ECS Fargate Run Task
         RunTaskResult response = amazonECS.runTask(request);
