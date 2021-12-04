@@ -13,7 +13,7 @@ TEST_ID=${1}
 TEST_NAME=${2}
 shift 2
 OPTIONS=$@
-SCRIPT="scripts/taurus.yaml"
+SCRIPT="scripts/scenario.yaml scripts/setting.yaml"
 S3_DIR="s3://$S3_BUCKET/results/$TEST_ID"
 ARTIFACTS_DIR="/tmp/artifacts"
 

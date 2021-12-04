@@ -1,26 +1,3 @@
-cli-aliases:
-  scenario1:
-    execution:
-      - concurrency: 1
-        ramp-up: 10s
-        hold-for: 60s
-        executor: jmeter
-        scenario: test1
-  scenario2:
-    execution:
-      - concurrency: 1
-        ramp-up: 10s
-        hold-for: 60s
-        executor: gatling
-        scenario: test2
-
-scenarios:
-  test1:
-    script: jmeter/google.jmx
-  test2:
-    script: gatling/sample.scala
-    simulation: tests.gatling.BasicSimulation
-
 reporting:
   - module: final-stats
     summary: true
@@ -30,8 +7,8 @@ reporting:
     dump-xml: /tmp/artifacts/results.xml
   - module: passfail
     criteria:
-      response time: p90 > 0.05s for 10s, continue as failed
-      error rate: failures < 50% for 60s, continue as failed
+      response time: p90 > 5s for 10s, continue as failed
+      error rate: failures > 50% for 60s, continue as failed
   - module: junit-xml
     filename: /tmp/artifacts/pass-fail.xml
     data-source: pass-fail

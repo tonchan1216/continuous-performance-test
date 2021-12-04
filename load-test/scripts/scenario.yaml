@@ -1,0 +1,30 @@
+cli-aliases:
+  default:
+    execution:
+      - concurrency: 1
+        ramp-up: 10s
+        hold-for: 60s
+        executor: jmeter
+        scenario: test1
+  scenario1:
+    execution:
+      - concurrency: 1
+        ramp-up: 10s
+        hold-for: 60s
+        executor: jmeter
+        scenario: test1
+  scenario2:
+    execution:
+      - concurrency: 1
+        ramp-up: 10s
+        hold-for: 60s
+        executor: gatling
+        scenario: test2
+
+scenarios:
+  test1:
+    script: jmeter/google.jmx
+  test2:
+    script: gatling/sample.scala
+    simulation: tests.gatling.BasicSimulation
+
