@@ -1,9 +1,9 @@
 package org.maca.continuous.perftest.app.batch.step;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.maca.continuous.perftest.common.app.model.Parameter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.maca.continuous.perftest.common.app.model.Parameter;
 import org.maca.continuous.perftest.domain.model.RunnerStatus;
 import org.maca.continuous.perftest.domain.service.RunnerStatusService;
 import org.springframework.batch.core.StepContribution;
@@ -15,6 +15,7 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.Objects;
 
 @Slf4j
 public class InputTasklet implements Tasklet {
@@ -30,6 +31,19 @@ public class InputTasklet implements Tasklet {
         Parameter parameter;
         ObjectMapper mapper = new ObjectMapper();
         parameter = mapper.readValue(param, Parameter.class);
+
+        // set default parameter if not specified.
+        if (Objects.isNull(parameter.clusterSize)) {
+            parameter.setClusterSize("1");
+        }
+
+        if (Objects.isNull(parameter.scenarioName)) {
+            if (Objects.nonNull(parameter.approval.customData)){
+                parameter.setScenarioName(parameter.approval.customData.toString());
+            } else {
+                parameter.setScenarioName("default");
+            }
+        }
 
         // DynamoDB INSERT
         Date startTime = new Date();

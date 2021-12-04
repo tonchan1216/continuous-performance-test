@@ -1,7 +1,5 @@
 package org.maca.continuous.perftest.config;
 
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ecs.AmazonECS;
 import com.amazonaws.services.ecs.AmazonECSClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
