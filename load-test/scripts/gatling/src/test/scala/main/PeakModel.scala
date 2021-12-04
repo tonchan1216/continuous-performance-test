@@ -4,20 +4,20 @@ import scenario._
 import variable._
 import io.gatling.core.Predef._
 
+import scala.collection.MapView
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class PeakModel extends Simulation {
   // parse load profile from Taurus
-  val t_iterations: Int = Integer.getInteger("iterations", 100).toInt
-  val t_concurrency: Int = Integer.getInteger("concurrency", 10).toInt
+  val t_concurrency: Int = Integer.getInteger("concurrency", 1).toInt
   val t_rampUp: Int = Integer.getInteger("ramp-up", 1).toInt
   val t_holdFor: Int = Integer.getInteger("hold-for", 60).toInt
-  val t_throughput: Int = Integer.getInteger("throughput", 100).toInt
 
-  val user = Map(1 -> 1,
-    2 -> 1,
-  )
+  val user: MapView[Int, Int] = Map(
+    1 -> 0.5,
+    2 -> 0.5,
+  ).view.mapValues(v => (v * t_concurrency).toInt)
 
   setUp(
     scenario01.sc01.inject(
