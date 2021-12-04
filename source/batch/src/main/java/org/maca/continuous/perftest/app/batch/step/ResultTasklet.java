@@ -1,7 +1,5 @@
 package org.maca.continuous.perftest.app.batch.step;
 
-import com.amazonaws.services.ecs.AmazonECS;
-import com.amazonaws.services.ecs.model.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -26,7 +24,10 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,18 +39,6 @@ public class ResultTasklet implements Tasklet {
 
     @Value("${amazon.s3.bucketName}")
     private String bucketName;
-
-    @Value("${amazon.ecs.pollingInterval}")
-    private String pollingInterval;
-
-    @Value("${amazon.ecs.cluster}")
-    private String cluster;
-
-    @Value("${amazon.ecs.taskDefinition}")
-    private String taskDefinition;
-
-    @Value("#{jobExecutionContext['clusterSize']}")
-    private String clusterSize;
 
     @Value("#{jobExecutionContext['testId']}")
     private String testId;
@@ -64,9 +53,6 @@ public class ResultTasklet implements Tasklet {
     private ResourcePatternResolver resolver;
 
     @Autowired
-    AmazonECS amazonECS;
-
-    @Autowired
     RunnerStatusService runnerStatusService;
 
     @Autowired
@@ -77,60 +63,6 @@ public class ResultTasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution stepContribution,
                                 ChunkContext chunkContext) throws Exception {
-        Date endTime;
-
-        //Get FARGATE Task ARNs
-        ListTasksRequest listTasksRequest = new ListTasksRequest()
-                .withCluster(cluster)
-                .withFamily(taskDefinition);
-        ListTasksResult familyTaskList = amazonECS.listTasks(listTasksRequest);
-
-        //Filtered FARGATE Task ARNs
-        DescribeTasksRequest initTasksRequest = new DescribeTasksRequest()
-                .withCluster(cluster)
-                .withTasks(familyTaskList.getTaskArns())
-                .withInclude("TAGS");
-        DescribeTasksResult initResponse = amazonECS.describeTasks(initTasksRequest);
-        List<String> filteredTaskArns = initResponse.getTasks().stream()
-                .filter(task -> task.getTags().contains(new Tag().withKey("TEST_ID").withValue(testId)))
-                .map(Task::getTaskArn)
-                .collect(Collectors.toList());
-
-        if (filteredTaskArns.isEmpty()) {
-            throw new Exception("Load test containers cannot running.");
-        }
-
-        // Polling Task Status
-        DescribeTasksRequest pollingTasksRequest = new DescribeTasksRequest()
-                .withCluster(cluster)
-                .withTasks(filteredTaskArns);
-        Long totalCount = Long.parseLong(clusterSize);
-        while(true){
-            try {
-                Thread.sleep(Integer.parseInt(pollingInterval));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw e;
-            }
-
-            DescribeTasksResult pollingResponse = amazonECS.describeTasks(pollingTasksRequest);
-            Map<String, Long> countByStatus = pollingResponse.getTasks().stream()
-                    .collect(Collectors.groupingBy(Task::getLastStatus, Collectors.counting()));
-
-            log.info(countByStatus.toString());
-            if (Objects.nonNull(countByStatus.get("STOPPED")) && Objects.equals(countByStatus.get("STOPPED"), totalCount)) {
-                Map<Integer, Long> exitCodeList = pollingResponse.getTasks().stream()
-                        .flatMap(task -> task.getContainers().stream())
-                        .collect(Collectors.groupingBy(Container::getExitCode, Collectors.counting()));
-                if (Objects.isNull(exitCodeList.get(0)) || exitCodeList.get(0) < totalCount) {
-                    throw new Exception("Load test containers terminated abnormally.");
-                }
-
-                endTime = new Date();
-                break;
-            }
-        }
-
         //S3 Download
         Resource[] results = resolver.getResources(S3_BUCKET_PREFIX +
                 bucketName + DELIMITER +
@@ -202,9 +134,7 @@ public class ResultTasklet implements Tasklet {
         PrimaryKey primaryKey = PrimaryKey.builder().testId(testId).startTime(startTime).build();
         RunnerStatus runnerStatus = runnerStatusService.getRunnerStatus(primaryKey);
         runnerStatus.setStatus("complete");
-        runnerStatus.setCompleteTasks(filteredTaskArns);
         runnerStatus.setResult(resultJson);
-        runnerStatus.setEndTime(endTime);
         runnerStatusService.updateRunnerStatus(runnerStatus);
 
         return RepeatStatus.FINISHED;

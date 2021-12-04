@@ -22,9 +22,9 @@ public class DistributedPartitioner implements Partitioner {
         Map<String, ExecutionContext> executionContextMap = new HashMap<>();
         int clusterSize = Integer.parseInt(param);
 
-        for (int i = 0; i < clusterSize; i++) {
+        for (int i = 1; i < clusterSize + 1; i++) {
             ExecutionContext executionContext = new ExecutionContext();
-            executionContext.putInt("partitionId", i + 1);
+            executionContext.putInt("partitionId", i);
             executionContextMap.put("partition" + i, executionContext);
         }
 

@@ -12,6 +12,9 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -52,18 +55,25 @@ public class RunTaskTasklet implements Tasklet {
         //Get Partition ID
         ExecutionContext stepExecutionContext = stepExecution.getExecutionContext();
         int partitionId  = stepExecutionContext.getInt("partitionId");
-        log.info(scenarioName + " will be started."
-                + "starting Performance Test Job: partition " + partitionId);
+        log.info(scenarioName + " will be started. (partition: " + partitionId + ")");
 
-        // ECS Fargate Run Task
+        // Set network configure
         String[] subnetList = subnetIds.split(",");
         AwsVpcConfiguration awsVpcConfiguration = new AwsVpcConfiguration()
                 .withSubnets(subnetList[partitionId % subnetList.length]) // round-robin AZ subnet
                 .withSecurityGroups(securityGroup);
         NetworkConfiguration networkConfiguration = new NetworkConfiguration().withAwsvpcConfiguration(awsVpcConfiguration);
+
+        //Set container configure
+        List<String> command = new ArrayList<>(Arrays.asList(
+                testId,
+                scenarioName,
+                "-o settings.env.CLUSTER_SIZE=" + clusterSize,
+                "-o settings.env.PARTITION_ID=" + partitionId
+        ));
         ContainerOverride containerOverride = new ContainerOverride()
                 .withName(containerName)
-                .withCommand(testId, scenarioName, "-o settings.env.CLUSTER_SIZE=" + clusterSize, "-o settings.env.PARTITION_ID=" + partitionId);
+                .withCommand(command);
         TaskOverride taskOverride = new TaskOverride().withContainerOverrides(containerOverride);
         RunTaskRequest request = new RunTaskRequest()
                 .withCluster(cluster)
@@ -72,6 +82,8 @@ public class RunTaskTasklet implements Tasklet {
                 .withNetworkConfiguration(networkConfiguration)
                 .withOverrides(taskOverride)
                 .withTags(new Tag().withKey("TEST_ID").withValue(testId));
+
+        // ECS Fargate Run Task
         RunTaskResult response = amazonECS.runTask(request);
 
         if (!response.getFailures().isEmpty()) {

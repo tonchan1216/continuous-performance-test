@@ -3,6 +3,7 @@ package org.maca.continuous.perftest.config;
 import org.maca.continuous.perftest.app.batch.listener.Listener;
 import org.maca.continuous.perftest.app.batch.partitioner.DistributedPartitioner;
 import org.maca.continuous.perftest.app.batch.step.InputTasklet;
+import org.maca.continuous.perftest.app.batch.step.PollingTasklet;
 import org.maca.continuous.perftest.app.batch.step.ResultTasklet;
 import org.maca.continuous.perftest.app.batch.step.RunTaskTasklet;
 import org.springframework.batch.core.Job;
@@ -40,6 +41,7 @@ public class BatchAppConfig extends DefaultBatchConfigurer {
                 .start(step1)
                 .next(partitionStep())
                 .next(step3())
+                .next(step4())
                 .build();
     }
 
@@ -63,6 +65,14 @@ public class BatchAppConfig extends DefaultBatchConfigurer {
     protected Step step3(){
         return stepBuilderFactory
                 .get("step3")
+                .tasklet(pollingTasklet())
+                .build();
+    }
+
+    @Bean
+    protected Step step4(){
+        return stepBuilderFactory
+                .get("step4")
                 .tasklet(resultTasklet())
                 .build();
     }
@@ -91,6 +101,12 @@ public class BatchAppConfig extends DefaultBatchConfigurer {
     @StepScope
     protected Tasklet resultTasklet(){
         return new ResultTasklet();
+    }
+
+    @Bean
+    @StepScope
+    protected Tasklet pollingTasklet(){
+        return new PollingTasklet();
     }
 
     @Bean
