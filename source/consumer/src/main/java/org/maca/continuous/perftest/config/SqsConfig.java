@@ -12,9 +12,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SqsConfig {
 
-    @Value("${queue.endpoint}")
+    @Value("${amazon.sqs.endpoint}")
     private String queueEndpoint;
-    @Value("${cloud.aws.region.static}")
+    @Value("${amazon.region}")
     private String region;
 
     @Autowired

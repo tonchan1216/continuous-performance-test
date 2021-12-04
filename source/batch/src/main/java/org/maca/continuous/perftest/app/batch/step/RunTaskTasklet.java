@@ -16,19 +16,19 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class RunTaskTasklet implements Tasklet {
-    @Value("${ecs.cluster}")
+    @Value("${amazon.ecs.cluster}")
     private String cluster;
 
-    @Value("${ecs.taskDefinition}")
+    @Value("${amazon.ecs.taskDefinition}")
     private String taskDefinition;
 
-    @Value("${ecs.containerName}")
+    @Value("${amazon.ecs.containerName}")
     private String containerName;
 
-    @Value("${ecs.subnetIds}")
+    @Value("${amazon.ecs.subnetIds}")
     private String subnetIds;
 
-    @Value("${ecs.securityGroup}")
+    @Value("${amazon.ecs.securityGroup}")
     private String securityGroup;
 
     @Value("#{stepExecution}")

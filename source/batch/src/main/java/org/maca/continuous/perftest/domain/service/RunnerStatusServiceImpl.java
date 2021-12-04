@@ -1,5 +1,6 @@
 package org.maca.continuous.perftest.domain.service;
 
+import org.maca.continuous.perftest.domain.model.PrimaryKey;
 import org.maca.continuous.perftest.domain.model.RunnerStatus;
 import org.maca.continuous.perftest.domain.repository.RunnerStatusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +15,8 @@ public class RunnerStatusServiceImpl implements RunnerStatusService {
     RunnerStatusRepository runnerStatusRepository;
 
     @Override
-    public RunnerStatus getRunnerStatus(String testId){
-        return runnerStatusRepository.findById(testId).get();
+    public RunnerStatus getRunnerStatus(PrimaryKey primaryKey){
+        return runnerStatusRepository.findById(primaryKey).get();
     }
 
     @Override
@@ -36,9 +37,9 @@ public class RunnerStatusServiceImpl implements RunnerStatusService {
     }
 
     @Override
-    public RunnerStatus deleteRunnerStatus(String testId){
-        RunnerStatus runnerStatuses = runnerStatusRepository.findById(testId).get();
-        runnerStatusRepository.deleteById(testId);
+    public RunnerStatus deleteRunnerStatus(PrimaryKey primaryKey){
+        RunnerStatus runnerStatuses = runnerStatusRepository.findById(primaryKey).get();
+        runnerStatusRepository.deleteById(primaryKey);
         return runnerStatuses;
     }
 }

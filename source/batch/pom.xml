@@ -66,6 +66,11 @@
             <artifactId>aws-java-sdk-ecs</artifactId>
             <version>1.12.118</version>
         </dependency>
+        <dependency>
+            <groupId>org.maca</groupId>
+            <artifactId>common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
 
     </dependencies>
 

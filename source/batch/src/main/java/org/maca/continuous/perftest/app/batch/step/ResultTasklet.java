@@ -8,6 +8,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.maca.continuous.perftest.app.model.*;
+import org.maca.continuous.perftest.domain.model.PrimaryKey;
 import org.maca.continuous.perftest.domain.model.RunnerStatus;
 import org.maca.continuous.perftest.domain.service.RunnerStatusService;
 import org.springframework.batch.core.StepContribution;
@@ -35,16 +36,16 @@ public class ResultTasklet implements Tasklet {
     private static final String DIRECTORY_PREFIX = "results";
     private static final String ARTIFACT_DIRECTORY_SUFFIX = "artifacts";
 
-    @Value("${bucket.name}")
+    @Value("${amazon.s3.bucketName}")
     private String bucketName;
 
-    @Value("${ecs.pollingInterval}")
+    @Value("${amazon.ecs.pollingInterval}")
     private String pollingInterval;
 
-    @Value("${ecs.cluster}")
+    @Value("${amazon.ecs.cluster}")
     private String cluster;
 
-    @Value("${ecs.taskDefinition}")
+    @Value("${amazon.ecs.taskDefinition}")
     private String taskDefinition;
 
     @Value("#{jobExecutionContext['clusterSize']}")
@@ -52,6 +53,9 @@ public class ResultTasklet implements Tasklet {
 
     @Value("#{jobExecutionContext['testId']}")
     private String testId;
+
+    @Value("#{jobExecutionContext['startTime']}")
+    private Date startTime;
 
     @Autowired
     ResourceLoader resourceLoader;
@@ -92,6 +96,10 @@ public class ResultTasklet implements Tasklet {
                 .map(Task::getTaskArn)
                 .collect(Collectors.toList());
 
+        if (filteredTaskArns.isEmpty()) {
+            throw new Exception("Load test containers cannot running.");
+        }
+
         // Polling Task Status
         DescribeTasksRequest pollingTasksRequest = new DescribeTasksRequest()
                 .withCluster(cluster)
@@ -101,8 +109,8 @@ public class ResultTasklet implements Tasklet {
             try {
                 Thread.sleep(Integer.parseInt(pollingInterval));
             } catch (InterruptedException e) {
-                log.error(e.getMessage());
                 Thread.currentThread().interrupt();
+                throw e;
             }
 
             DescribeTasksResult pollingResponse = amazonECS.describeTasks(pollingTasksRequest);
@@ -111,6 +119,13 @@ public class ResultTasklet implements Tasklet {
 
             log.info(countByStatus.toString());
             if (Objects.nonNull(countByStatus.get("STOPPED")) && Objects.equals(countByStatus.get("STOPPED"), totalCount)) {
+                Map<Integer, Long> exitCodeList = pollingResponse.getTasks().stream()
+                        .flatMap(task -> task.getContainers().stream())
+                        .collect(Collectors.groupingBy(Container::getExitCode, Collectors.counting()));
+                if (Objects.isNull(exitCodeList.get(0)) || exitCodeList.get(0) < totalCount) {
+                    throw new Exception("Load test containers terminated abnormally.");
+                }
+
                 endTime = new Date();
                 break;
             }
@@ -124,7 +139,7 @@ public class ResultTasklet implements Tasklet {
                 ARTIFACT_DIRECTORY_SUFFIX  + "/*/results.xml");
 
         if (results.length == 0) {
-            throw new Exception("no result Resources");
+            throw new Exception("Not Found result Resources in S3 Bucket");
         }
 
         String[] resultList = new String[results.length];
@@ -143,14 +158,14 @@ public class ResultTasklet implements Tasklet {
             finalStatusList.add(xmlMapper.readValue(s, FinalStatus.class));
         }
 
-        if (finalStatusList.isEmpty()) {
-            throw new Exception("empty result");
-        }
-
         //Calculate Result
         List<Group> grpByLabel = finalStatusList.stream()
                 .flatMap(g -> g.getGroupList().stream())
                 .collect(Collectors.groupingBy(Group::getLabel)).get("");
+
+        if (grpByLabel.isEmpty()) {
+            throw new Exception("finalStatus list is empty");
+        }
 
         Result result = Result.builder()
                 .testDuration(finalStatusList.stream()
@@ -184,7 +199,8 @@ public class ResultTasklet implements Tasklet {
         log.info(resultJson);
 
         // DynamoDB Update
-        RunnerStatus runnerStatus = runnerStatusService.getRunnerStatus(testId);
+        PrimaryKey primaryKey = PrimaryKey.builder().testId(testId).startTime(startTime).build();
+        RunnerStatus runnerStatus = runnerStatusService.getRunnerStatus(primaryKey);
         runnerStatus.setStatus("complete");
         runnerStatus.setCompleteTasks(filteredTaskArns);
         runnerStatus.setResult(resultJson);
