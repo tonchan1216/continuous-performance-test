@@ -20,11 +20,22 @@ cli-aliases:
         hold-for: 60s
         executor: gatling
         scenario: test2
+  scenario3:
+    execution:
+      - concurrency: 1
+        ramp-up: 10s
+        hold-for: 60s
+        executor: gatling
+        scenario: test3
+
 
 scenarios:
   test1:
     script: jmeter/google.jmx
   test2:
-    script: gatling/sample.scala
+    script: gatling/src/test/scala/sample.scala
     simulation: tests.gatling.BasicSimulation
+  test3:
+    script: gatling/src/test/scala/main/PeakModel.scala
+    simulation: main.PeakModel
 

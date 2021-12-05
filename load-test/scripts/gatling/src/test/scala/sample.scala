@@ -1,9 +1,9 @@
 package tests.gatling
- 
+
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import scala.concurrent.duration._
- 
+
 class BasicSimulation extends Simulation {
   // parse load profile from Taurus
   val t_iterations = Integer.getInteger("iterations", 100).toInt
