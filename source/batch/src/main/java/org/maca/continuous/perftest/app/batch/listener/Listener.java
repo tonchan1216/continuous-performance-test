@@ -6,6 +6,7 @@ import com.amazonaws.services.codepipeline.model.ApprovalResult;
 import com.amazonaws.services.codepipeline.model.ApprovalStatus;
 import com.amazonaws.services.codepipeline.model.PutApprovalResultRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.maca.continuous.perftest.app.batch.helper.PipelineHelper;
 import org.maca.continuous.perftest.common.app.model.Approval;
 import org.maca.continuous.perftest.domain.model.PrimaryKey;
 import org.maca.continuous.perftest.domain.model.RunnerStatus;
@@ -26,7 +27,7 @@ public class Listener extends JobExecutionListenerSupport {
     RunnerStatusService runnerStatusService;
 
     @Autowired
-    AWSCodePipeline awsCodePipeline;
+    PipelineHelper pipelineHelper;
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
@@ -62,18 +63,9 @@ public class Listener extends JobExecutionListenerSupport {
         if (Objects.nonNull(approval)) {
             ApprovalResult approvalResult = new ApprovalResult()
                     .withStatus(ApprovalStatus.Rejected)
-                    .withSummary("Performance Test has failed: " + errorReason);
-            PutApprovalResultRequest putApprovalResultRequest = new PutApprovalResultRequest()
-                    .withActionName(approval.actionName)
-                    .withPipelineName(approval.pipelineName)
-                    .withStageName(approval.stageName)
-                    .withToken(approval.token)
-                    .withResult(approvalResult);
-            try {
-                awsCodePipeline.putApprovalResult(putApprovalResultRequest);
-            } catch (AWSCodePipelineException e) {
-                log.error(e.getMessage());
-            }
+                    .withSummary("Test has failed. (" + errorReason + ")");
+
+            pipelineHelper.approvalPipeline(approval, approvalResult);
         }
     }
 }
