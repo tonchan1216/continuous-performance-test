@@ -93,7 +93,7 @@ public class PollingTasklet implements Tasklet {
             Map<String, Long> countByStatus = pollingResponse.getTasks().stream()
                     .collect(Collectors.groupingBy(Task::getLastStatus, Collectors.counting()));
 
-            log.info(countByStatus.toString());
+            log.info("Polling stats: " + countByStatus.toString());
             if (Objects.nonNull(countByStatus.get("STOPPED")) && Objects.equals(countByStatus.get("STOPPED"), totalCount)) {
                 Map<Integer, Long> exitCodeList = pollingResponse.getTasks().stream()
                         .flatMap(task -> task.getContainers().stream())

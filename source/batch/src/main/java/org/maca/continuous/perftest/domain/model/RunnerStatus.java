@@ -33,6 +33,8 @@ public class RunnerStatus implements Serializable {
     @DynamoDBAttribute
     private String status;
     @DynamoDBAttribute
+    private String criteria;
+    @DynamoDBAttribute
     private String result;
     @DynamoDBAttribute
     private String errorReason;

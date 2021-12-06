@@ -1,21 +1,32 @@
 package org.maca.continuous.perftest.app.batch.listener;
 
+import com.amazonaws.services.codepipeline.AWSCodePipeline;
+import com.amazonaws.services.codepipeline.model.AWSCodePipelineException;
+import com.amazonaws.services.codepipeline.model.ApprovalResult;
+import com.amazonaws.services.codepipeline.model.ApprovalStatus;
+import com.amazonaws.services.codepipeline.model.PutApprovalResultRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.maca.continuous.perftest.common.app.model.Approval;
 import org.maca.continuous.perftest.domain.model.PrimaryKey;
 import org.maca.continuous.perftest.domain.model.RunnerStatus;
 import org.maca.continuous.perftest.domain.service.RunnerStatusService;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListenerSupport;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class Listener extends JobExecutionListenerSupport {
     @Autowired
     RunnerStatusService runnerStatusService;
+
+    @Autowired
+    AWSCodePipeline awsCodePipeline;
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
@@ -24,24 +35,45 @@ public class Listener extends JobExecutionListenerSupport {
 
     @Override
     public void afterJob(JobExecution jobExecution) {
+        ExecutionContext executionContext = jobExecution.getExecutionContext();
         List<Throwable> exceptions = jobExecution.getAllFailureExceptions();
         if (exceptions.isEmpty()) {
             log.info(this.getClass().getName() + "#afterJob started.");
             return;
         }
 
+        String errorReason = exceptions.stream().map(Throwable::getMessage).collect(Collectors.toList()).toString();
         log.error("This job has occurred some exceptions as follow. " +
                         "[job-name:{}] [size:{}]",
                 jobExecution.getJobInstance().getJobName(), exceptions.size());
-        exceptions.forEach(th -> log.error(th.getMessage()));
+        log.error(errorReason);
 
-        String testId = jobExecution.getExecutionContext().getString("testId");
-        Date startTime = (Date) jobExecution.getExecutionContext().get("startTime");
-        PrimaryKey primaryKey = PrimaryKey.builder().testId(testId).startTime(startTime).build();
-        RunnerStatus runnerStatus = runnerStatusService.getRunnerStatus(primaryKey);
+        // Update DynamoDB
+        String testId = executionContext.getString("testId");
+        Date startTime = (Date) executionContext.get("startTime");
+        RunnerStatus runnerStatus = runnerStatusService.getRunnerStatus(testId, startTime);
         runnerStatus.setStatus("failed");
-        runnerStatus.setErrorReason(exceptions.stream().map(Throwable::getMessage).collect(Collectors.toList()).toString());
+        runnerStatus.setErrorReason(errorReason);
         runnerStatus.setEndTime(new Date());
         runnerStatusService.updateRunnerStatus(runnerStatus);
+
+        // Update Codepipeline
+        Approval approval = (Approval)executionContext.get("approval");
+        if (Objects.nonNull(approval)) {
+            ApprovalResult approvalResult = new ApprovalResult()
+                    .withStatus(ApprovalStatus.Rejected)
+                    .withSummary("Performance Test has failed: " + errorReason);
+            PutApprovalResultRequest putApprovalResultRequest = new PutApprovalResultRequest()
+                    .withActionName(approval.actionName)
+                    .withPipelineName(approval.pipelineName)
+                    .withStageName(approval.stageName)
+                    .withToken(approval.token)
+                    .withResult(approvalResult);
+            try {
+                awsCodePipeline.putApprovalResult(putApprovalResultRequest);
+            } catch (AWSCodePipelineException e) {
+                log.error(e.getMessage());
+            }
+        }
     }
 }

@@ -69,11 +69,15 @@
             <version>1.12.125</version>
         </dependency>
         <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-codepipeline</artifactId>
+            <version>1.12.125</version>
+        </dependency>
+        <dependency>
             <groupId>org.maca</groupId>
             <artifactId>common</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -85,5 +89,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
