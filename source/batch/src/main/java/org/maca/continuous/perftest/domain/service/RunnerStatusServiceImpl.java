@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -16,6 +17,12 @@ public class RunnerStatusServiceImpl implements RunnerStatusService {
 
     @Override
     public RunnerStatus getRunnerStatus(PrimaryKey primaryKey){
+        return runnerStatusRepository.findById(primaryKey).get();
+    }
+
+    @Override
+    public RunnerStatus getRunnerStatus(String testId, Date startTime){
+        PrimaryKey primaryKey = PrimaryKey.builder().testId(testId).startTime(startTime).build();
         return runnerStatusRepository.findById(primaryKey).get();
     }
 

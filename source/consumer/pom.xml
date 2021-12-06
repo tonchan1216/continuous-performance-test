@@ -13,10 +13,12 @@
     <version>0.0.1-SNAPSHOT</version>
     <name>consumer</name>
     <description>consumer</description>
+
     <properties>
         <java.version>11</java.version>
-        <spring-cloud.version>Greenwich.SR2</spring-cloud.version>
+        <spring-cloud.version>2020.0.4</spring-cloud.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>

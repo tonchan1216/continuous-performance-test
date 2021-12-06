@@ -62,6 +62,7 @@ public class InputTasklet implements Tasklet {
         jobExecutionContext.put("scenarioName", parameter.scenarioName);
         jobExecutionContext.put("testId", runnerStatus.getTestId());
         jobExecutionContext.put("startTime", startTime);
+        jobExecutionContext.put("approval", parameter.approval);
 
         return RepeatStatus.FINISHED;
     }
