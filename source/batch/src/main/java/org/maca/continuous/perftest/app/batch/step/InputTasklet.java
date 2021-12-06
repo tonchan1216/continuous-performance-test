@@ -3,6 +3,7 @@ package org.maca.continuous.perftest.app.batch.step;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.maca.continuous.perftest.common.apinfra.exception.BusinessException;
 import org.maca.continuous.perftest.common.app.model.Parameter;
 import org.maca.continuous.perftest.domain.model.RunnerStatus;
 import org.maca.continuous.perftest.domain.service.RunnerStatusService;
@@ -24,13 +25,17 @@ public class InputTasklet implements Tasklet {
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution,
-                                ChunkContext chunkContext) throws JsonProcessingException {
+                                ChunkContext chunkContext) throws BusinessException {
         //Get Parameters from SQS
         StepExecution stepExecution = chunkContext.getStepContext().getStepExecution();
         String param = stepExecution.getJobParameters().getString("param");
         Parameter parameter;
         ObjectMapper mapper = new ObjectMapper();
-        parameter = mapper.readValue(param, Parameter.class);
+        try {
+            parameter = mapper.readValue(param, Parameter.class);
+        } catch (JsonProcessingException e) {
+            throw new BusinessException("400", e.getMessage());
+        }
 
         // set default parameter if not specified.
         if (Objects.isNull(parameter.clusterSize)) {

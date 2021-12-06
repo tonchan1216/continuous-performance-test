@@ -3,11 +3,13 @@ package org.maca.continuous.perftest.app.batch.step;
 import com.amazonaws.services.codepipeline.model.ApprovalResult;
 import com.amazonaws.services.codepipeline.model.ApprovalStatus;
 import com.amazonaws.services.s3.AmazonS3;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.maca.continuous.perftest.app.batch.helper.ParseHelper;
 import org.maca.continuous.perftest.app.batch.helper.PipelineHelper;
 import org.maca.continuous.perftest.app.model.*;
+import org.maca.continuous.perftest.common.apinfra.exception.SystemException;
 import org.maca.continuous.perftest.common.app.model.Approval;
 import org.maca.continuous.perftest.domain.model.RunnerStatus;
 import org.maca.continuous.perftest.domain.service.RunnerStatusService;
@@ -23,6 +25,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternResolver;
 
+import java.io.IOException;
 import java.util.*;
 
 @Slf4j
@@ -63,7 +66,7 @@ public class ResultTasklet implements Tasklet {
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution,
-                                ChunkContext chunkContext) throws Exception {
+                                ChunkContext chunkContext) throws SystemException {
         //S3 Download and parse XML
         Resource[] results = fileDownload("results.xml");
         List<FinalStatus> finalStatusList = parseHelper.parseXml(results, FinalStatus.class);
@@ -71,7 +74,12 @@ public class ResultTasklet implements Tasklet {
         //Calculate Result
         Result result = parseHelper.calculateResult(finalStatusList);
         ObjectMapper mapper = new ObjectMapper();
-        String resultJson = mapper.writeValueAsString(result);
+        String resultJson;
+        try {
+            resultJson = mapper.writeValueAsString(result);
+        } catch (JsonProcessingException e) {
+            throw new SystemException("500", e.getMessage());
+        }
         log.info(resultJson);
 
         // Download and parse pass-fail files
@@ -106,14 +114,18 @@ public class ResultTasklet implements Tasklet {
     }
 
     //S3 Download
-    private Resource[] fileDownload(String fileName) throws Exception {
+    private Resource[] fileDownload(String fileName) throws SystemException {
         String S3Path = "s3://" + bucketName + DELIMITER +
                 "results" + DELIMITER + testId + DELIMITER + "artifacts/*/" + fileName;
-
-        Resource[] results = resolver.getResources(S3Path);
+        Resource[] results;
+        try {
+            results = resolver.getResources(S3Path);
+        } catch (IOException e) {
+            throw new SystemException("500", e.getMessage());
+        }
 
         if (results.length == 0) {
-            throw new Exception("Not Found result Resources in S3 Bucket");
+            throw new SystemException("500", "Not Found result Resources in S3 Bucket");
         }
         return results;
     }

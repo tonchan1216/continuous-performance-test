@@ -3,6 +3,7 @@ package org.maca.continuous.perftest.app.batch.step;
 import com.amazonaws.services.ecs.AmazonECS;
 import com.amazonaws.services.ecs.model.*;
 import lombok.extern.slf4j.Slf4j;
+import org.maca.continuous.perftest.common.apinfra.exception.SystemException;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -51,7 +52,7 @@ public class RunTaskTasklet implements Tasklet {
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution,
-                                ChunkContext chunkContext) throws Exception {
+                                ChunkContext chunkContext) throws SystemException {
         //Get Partition ID
         ExecutionContext stepExecutionContext = stepExecution.getExecutionContext();
         int partitionId  = stepExecutionContext.getInt("partitionId");
@@ -88,7 +89,7 @@ public class RunTaskTasklet implements Tasklet {
         RunTaskResult response = amazonECS.runTask(request);
 
         if (!response.getFailures().isEmpty()) {
-            throw new Exception(response.getFailures().stream().map(Failure::getReason).collect(Collectors.toList()).toString());
+            throw new SystemException("500",response.getFailures().stream().map(Failure::getReason).collect(Collectors.toList()).toString());
         }
 
         return RepeatStatus.FINISHED;

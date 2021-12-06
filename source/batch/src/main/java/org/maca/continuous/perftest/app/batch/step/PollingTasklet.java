@@ -3,6 +3,7 @@ package org.maca.continuous.perftest.app.batch.step;
 import com.amazonaws.services.ecs.AmazonECS;
 import com.amazonaws.services.ecs.model.*;
 import lombok.extern.slf4j.Slf4j;
+import org.maca.continuous.perftest.common.apinfra.exception.SystemException;
 import org.maca.continuous.perftest.domain.model.PrimaryKey;
 import org.maca.continuous.perftest.domain.model.RunnerStatus;
 import org.maca.continuous.perftest.domain.service.RunnerStatusService;
@@ -52,7 +53,7 @@ public class PollingTasklet implements Tasklet {
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution,
-                                ChunkContext chunkContext) throws Exception {
+                                ChunkContext chunkContext) throws SystemException {
         Date endTime;
 
         //Get FARGATE Task ARNs
@@ -73,7 +74,7 @@ public class PollingTasklet implements Tasklet {
                 .collect(Collectors.toList());
 
         if (filteredTaskArns.isEmpty()) {
-            throw new Exception("Load test containers cannot running.");
+            throw new SystemException("500","Load test containers cannot running.");
         }
 
         // Polling Task Status
@@ -86,7 +87,7 @@ public class PollingTasklet implements Tasklet {
                 Thread.sleep(Integer.parseInt(pollingInterval));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw e;
+                throw new SystemException("500",e.getMessage());
             }
 
             DescribeTasksResult pollingResponse = amazonECS.describeTasks(pollingTasksRequest);
@@ -99,7 +100,7 @@ public class PollingTasklet implements Tasklet {
                         .flatMap(task -> task.getContainers().stream())
                         .collect(Collectors.groupingBy(Container::getExitCode, Collectors.counting()));
                 if (Objects.isNull(exitCodeList.get(0)) || exitCodeList.get(0) < totalCount) {
-                    throw new Exception("Load test containers terminated abnormally.");
+                    throw new SystemException("500","Load test containers terminated abnormally.");
                 }
 
                 endTime = new Date();

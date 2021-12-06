@@ -4,6 +4,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.maca.continuous.perftest.app.model.*;
+import org.maca.continuous.perftest.common.apinfra.exception.SystemException;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -19,13 +20,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class ParseHelper {
-    public Result calculateResult (List<FinalStatus> finalStatusList) throws Exception {
+    public Result calculateResult (List<FinalStatus> finalStatusList) throws SystemException {
         List<Group> grpByLabel = finalStatusList.stream()
                 .flatMap(g -> g.getGroupList().stream())
                 .collect(Collectors.groupingBy(Group::getLabel)).get("");
 
         if (grpByLabel.isEmpty()) {
-            throw new Exception("finalStatus list is empty");
+            throw new SystemException("500", "finalStatus list is empty");
         }
 
         return Result.builder()
