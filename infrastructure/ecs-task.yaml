@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: ECS Task Definition
 
 Parameters:
@@ -54,6 +54,8 @@ Resources:
           Image: !Ref ConsumerContainerImage
           Memory: 1024
           Environment:
+            - Name: AWS_REGION
+              Value: !Ref "AWS::Region"
             - Name: ECS_CLUSTER
               Value:
                 Fn::ImportValue: !Sub ${Prefix}-EcsCluster
@@ -64,12 +66,21 @@ Resources:
             - Name: SUBNET_ID
               Value: !Sub
                 - ${subnet1},${subnet2},${subnet3}
-                - subnet1:  {'Fn::ImportValue': !Sub '${Prefix}-PrivateSubnet1'}
-                  subnet2:  {'Fn::ImportValue': !Sub '${Prefix}-PrivateSubnet2'}
-                  subnet3:  {'Fn::ImportValue': !Sub '${Prefix}-PrivateSubnet3'}
+                - subnet1:
+                    { "Fn::ImportValue": !Sub "${Prefix}-PrivateSubnet1" }
+                  subnet2:
+                    { "Fn::ImportValue": !Sub "${Prefix}-PrivateSubnet2" }
+                  subnet3:
+                    { "Fn::ImportValue": !Sub "${Prefix}-PrivateSubnet3" }
             - Name: SECURITY_GROUP
               Value:
                 Fn::ImportValue: !Sub ${Prefix}-EcsClusterSg
+            - Name: DYNAMODB_TABLE
+            - Name: S3_BUCKET
+              Value: !Sub ${Prefix}-bucket
+            - Name: SQS_NAME
+              Value:
+                Fn::ImportValue: !Sub ${Prefix}-Table
 
   LoadECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -78,8 +89,8 @@ Resources:
       RequiresCompatibilities:
         - FARGATE
         - EC2
-      Memory: 1024
-      Cpu: 512
+      Memory: 4096
+      Cpu: 2048
       NetworkMode: awsvpc
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
       TaskRoleArn:
@@ -87,14 +98,14 @@ Resources:
       ContainerDefinitions:
         - Name: !Sub ${Prefix}-load-test
           Image: !Ref LoadContainerImage
-          Memory: 1024
+          Memory: 4096
           Environment:
             - Name: S3_BUCKET
               Value: !Sub ${Prefix}-bucket
 
 Outputs:
   ConsumerECSTaskDefinition:
-    Description:  ECS Task Definition
+    Description: ECS Task Definition
     Value: !Ref ConsumerECSTaskDefinition
     Export:
       Name: !Sub ${Prefix}-ConsumerECSTaskDefinition
