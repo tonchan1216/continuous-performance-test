@@ -47,7 +47,7 @@ public class MessageListener {
             parameter.setApproval(parsedMessage.approval);
             params = mapper.writeValueAsString(parameter);
         } catch (JsonProcessingException e) {
-            log.error(e.getMessage());
+            log.warn(e.getMessage());
             return;
         }
 
