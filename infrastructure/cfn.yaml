@@ -34,7 +34,12 @@ Parameters:
     MinLength: 1
     MaxLength: 255
     Default: test
-  ContainerImage:
+  ConsumerContainerImage:
+    Description: Prefix Name
+    Type: String
+    MinLength: 1
+    Default: repository/name:tag
+  LoadContainerImage:
     Description: Prefix Name
     Type: String
     MinLength: 1
@@ -71,6 +76,8 @@ Resources:
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: ./sqs.yaml
+      Parameters:
+        Prefix: !Ref Prefix
 
   DynamoDBStack:
     Type: AWS::CloudFormation::Stack
@@ -78,6 +85,13 @@ Resources:
       TemplateURL: ./dynamodb.yaml
       Parameters:
         Prefix: !Ref Prefix
+
+  # ECRStack:
+  #   Type: AWS::CloudFormation::Stack
+  #   Properties:
+  #     TemplateURL: ./ecr.yaml
+  #     Parameters:
+  #       Prefix: !Ref Prefix
 
   ECSTaskRoleStack:
     Type: AWS::CloudFormation::Stack
@@ -94,7 +108,8 @@ Resources:
       TemplateURL: ./ecs-task.yaml
       Parameters:
         Prefix: !Ref Prefix
-        ContainerImage: !Ref ContainerImage
+        ConsumerContainerImage: !Ref ConsumerContainerImage
+        LoadContainerImage: !Ref LoadContainerImage
 
   ECSClusterStack:
     Type: AWS::CloudFormation::Stack
@@ -107,14 +122,14 @@ Resources:
         VPCId: !Ref VPCId
         Keypair: !Ref Keypair
 
-  ECSServiceStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn:
-      - NetworkStack
-      - ECSClusterStack
-      - ECSTaskRoleStack
-      - ECSTaskDefinitionStack
-    Properties:
-      TemplateURL: ./ecs-service.yaml
-      Parameters:
-        Prefix: !Ref Prefix
+  # ECSServiceStack:
+  #   Type: AWS::CloudFormation::Stack
+  #   DependsOn:
+  #     - NetworkStack
+  #     - ECSClusterStack
+  #     - ECSTaskRoleStack
+  #     - ECSTaskDefinitionStack
+  #   Properties:
+  #     TemplateURL: ./ecs-service.yaml
+  #     Parameters:
+  #       Prefix: !Ref Prefix
