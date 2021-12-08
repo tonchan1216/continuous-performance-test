@@ -5,37 +5,37 @@ cli-aliases:
         ramp-up: 10s
         hold-for: 10s
         executor: jmeter
-        scenario: test1
+        scenario: jmeter-sample
   scenario1:
     execution:
       - concurrency: 1
         ramp-up: 10s
         hold-for: 60s
         executor: jmeter
-        scenario: test1
+        scenario: jmeter-sample
   scenario2:
     execution:
       - concurrency: 1
         ramp-up: 10s
         hold-for: 60s
         executor: gatling
-        scenario: test2
+        scenario: simple-gatling
   scenario3:
     execution:
       - concurrency: 1
         ramp-up: 10s
         hold-for: 60s
         executor: gatling
-        scenario: test3
+        scenario: complex-gatling
 
 
 scenarios:
-  test1:
+  jmeter-sample:
     script: jmeter/google.jmx
-  test2:
+  simple-gatling:
     script: gatling/sample.scala                #Simple Gatling Test Suites with single scala file
     simulation: tests.gatling.BasicSimulation
-  test3:
+  complex-gatling:
     script: gatling/gatling-1.0.0.jar           #Running Complex Gatling Test Suites with bundled jar
     simulation: simulation.PeakModel
 
