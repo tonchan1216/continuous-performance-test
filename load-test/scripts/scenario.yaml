@@ -33,9 +33,9 @@ scenarios:
   test1:
     script: jmeter/google.jmx
   test2:
-    script: gatling/src/test/scala/sample.scala
+    script: gatling/sample.scala                #Simple Gatling Test Suites with single scala file
     simulation: tests.gatling.BasicSimulation
   test3:
-    script: gatling/src/test/scala/main/PeakModel.scala
+    script: gatling/gatling-1.0.0.jar           #Running Complex Gatling Test Suites with bundled jar
     simulation: main.PeakModel
 
