@@ -62,9 +62,10 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
-    #- run: |
-    #   make bootstrap
-    #   make release
+    - run: |
+       mvn install -f source/common/pom.xml
+       mvn install -f source/batch/pom.xml
+       mvn install -f source/consumer/pom.xml
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v1
