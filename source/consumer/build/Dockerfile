@@ -25,6 +25,4 @@ RUN apk --update add tzdata && \
     mkdir -p /opt/app/
 COPY --from=builder ${APP_PATH}/source/consumer/target/${MODULE_NAME}.jar /opt/app/
 
-EXPOSE 8080
-
 CMD java -jar -Dspring.profiles.active=production /opt/app/${MODULE_NAME}.jar
