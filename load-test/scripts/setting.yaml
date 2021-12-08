@@ -23,7 +23,7 @@ modules:
   console:
     disable: true
   jmeter:
-    version: auto
+    version: 5.4.1
     force-ctg: true
     detect-plugins: true
     properties:
@@ -31,6 +31,8 @@ modules:
       log_level.JMeter.threads: WARN
     system-properties:
       org.apache.commons.logging.simplelog.log.org.apache.http: WARN
+  gatling:
+    version: 3.5.1
   consolidator:
     generalize-labels: 500 # support up to this number of labels
     max-error-variety: 100 # max count of different error messages accepted (default: 100)

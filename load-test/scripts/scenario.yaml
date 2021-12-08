@@ -37,5 +37,5 @@ scenarios:
     simulation: tests.gatling.BasicSimulation
   test3:
     script: gatling/gatling-1.0.0.jar           #Running Complex Gatling Test Suites with bundled jar
-    simulation: main.PeakModel
+    simulation: simulation.PeakModel
 
