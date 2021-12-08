@@ -30,9 +30,3 @@ Outputs:
     Value: !Ref S3Bucket
     Export:
       Name: S3Bucket
-
-  S3BucketArn:
-    Description: S3 bucket arn
-    Value: !GetAtt S3Bucket.Arn
-    Export:
-      Name: S3Bucket-Arn

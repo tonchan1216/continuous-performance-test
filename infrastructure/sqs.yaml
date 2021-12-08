@@ -22,18 +22,6 @@ Resources:
       ReceiveMessageWaitTimeSeconds: 0
 
 Outputs:
-  SQSServiceEndpoint:
-    Description: SQS service endipoint
-    Value: !Sub https://sqs.${AWS::Region}.amazonaws.com
-    Export:
-      Name: SQS-ServiceEndpoint
-
-  SQSServiceRegion:
-    Description: SQS service region
-    Value: !Sub ${AWS::Region}
-    Export:
-      Name: SQS-Region
-
   SQSQueue:
     Description: SQS  queue name
     Value: !Ref SQSQueue

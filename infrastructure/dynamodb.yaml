@@ -32,16 +32,6 @@ Resources:
         WriteCapacityUnits: 5
 
 Outputs:
-  EnvironmentRegion:
-    Description: Dev Environment Region
-    Value: !Sub ${AWS::Region}
-    Export:
-      Name: DynamoDB-Region
-  DynamoDBServiceEndpoint:
-    Description: DynamoDB service endipoint
-    Value: !Sub https://dynamodb.${AWS::Region}.amazonaws.com
-    Export:
-      Name: ServiceEndpoint
   DynamoDBTable:
     Description: DynamoDB Table
     Value: !Ref DynamoDBTable
