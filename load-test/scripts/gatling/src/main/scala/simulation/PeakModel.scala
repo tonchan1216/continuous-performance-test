@@ -1,4 +1,4 @@
-package main
+package simulation
 
 import scenario._
 import variable._
@@ -17,7 +17,7 @@ class PeakModel extends Simulation {
   val user: MapView[Int, Int] = Map(
     1 -> 0.5,
     2 -> 0.5,
-  ).view.mapValues(v => (v * t_concurrency).toInt)
+  ).view.mapValues(v => Math.ceil(v * t_concurrency).toInt)
 
   setUp(
     scenario01.sc01.inject(
