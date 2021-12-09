@@ -29,10 +29,15 @@ modules:
     properties:
       log_level.JMeter: WARN
       log_level.JMeter.threads: WARN
+      CLUSTER_SIZE: ${CLUSTER_SIZE}
+      PARTITION_ID: ${PARTITION_ID}
     system-properties:
       org.apache.commons.logging.simplelog.log.org.apache.http: WARN
   gatling:
     version: 3.5.1
+    properties:
+      CLUSTER_SIZE: ${CLUSTER_SIZE}
+      PARTITION_ID: ${PARTITION_ID}
   consolidator:
     generalize-labels: 500 # support up to this number of labels
     max-error-variety: 100 # max count of different error messages accepted (default: 100)
