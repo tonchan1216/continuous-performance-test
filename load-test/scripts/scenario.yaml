@@ -34,6 +34,9 @@ scenarios:
     script: jmeter/google.jmx
   juice-shop:
     script: jmeter/juice-shop.jmx
+    properties:
+      domain: localhost
+      port: 3000
   simple-gatling:
     script: gatling/sample.scala                #Simple Gatling Test Suites with single scala file
     simulation: tests.gatling.BasicSimulation
