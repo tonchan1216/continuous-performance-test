@@ -8,11 +8,11 @@ cli-aliases:
         scenario: jmeter-sample
   scenario1:
     execution:
-      - concurrency: 1
+      - concurrency: 10
         ramp-up: 10s
-        hold-for: 60s
+        hold-for: 300s
         executor: jmeter
-        scenario: jmeter-sample
+        scenario: juice-shop
   scenario2:
     execution:
       - concurrency: 1
@@ -32,6 +32,8 @@ cli-aliases:
 scenarios:
   jmeter-sample:
     script: jmeter/google.jmx
+  juice-shop:
+    script: jmeter/juice-shop.jmx
   simple-gatling:
     script: gatling/sample.scala                #Simple Gatling Test Suites with single scala file
     simulation: tests.gatling.BasicSimulation
