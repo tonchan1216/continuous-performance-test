@@ -9,5 +9,5 @@ public class ResponseCodeCount {
 	public Integer value;
 
 	@JacksonXmlProperty(localName = "param", isAttribute = true)
-	public int param;
+	public String param;
 }

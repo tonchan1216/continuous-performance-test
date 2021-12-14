@@ -11,10 +11,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -61,14 +58,15 @@ public class ParseHelper {
     public Map<String, Long> calculateCriteria (List<JUnitTestSuites> testSuiteList) {
         return testSuiteList.stream()
                 .flatMap(t -> t.getTestSuites().stream())
+                .filter(t -> Objects.nonNull(t.getTestCases()))
                 .flatMap(t -> t.getTestCases().stream())
+                .filter(c -> Objects.nonNull(c.getError()))
                 .map(JUnitTestCase::getError)
                 .collect(Collectors.groupingBy(JUnitError::getMessage, Collectors.counting()));
     }
 
     public <T> List<T> parseXml(Resource[] resources, Class<T> mapperClass) {
         XmlMapper xmlMapper = new XmlMapper();
-
         List<T> arrayList = new ArrayList<>();
         for (Resource resource : resources) {
             try (InputStream inputStream = resource.getInputStream()) {
