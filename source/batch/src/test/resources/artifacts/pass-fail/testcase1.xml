@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+    <testsuite name="bzt_pass_fail" package_name="bzt">
+        <testcase classname="bzt-8769024575880" name="p90 of &gt;0.0005s for 10s">
+            <error message="Failed: response time" type="pass/fail criteria triggered"/>
+        </testcase>
+        <testcase classname="bzt-8769024575880" name="failures of &lt;50% for 60s"/>
+    </testsuite>
+</testsuites>
