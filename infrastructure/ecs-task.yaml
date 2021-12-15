@@ -43,8 +43,8 @@ Resources:
       Family: !Sub ${Prefix}-consumer
       RequiresCompatibilities:
         - EC2
-      Memory: 1024
       Cpu: 512
+      Memory: 1024
       NetworkMode: bridge
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
       TaskRoleArn:
@@ -52,6 +52,7 @@ Resources:
       ContainerDefinitions:
         - Name: !Sub ${Prefix}-consumer
           Image: !Ref ConsumerContainerImage
+          Cpu: 512
           Memory: 1024
           Environment:
             - Name: AWS_REGION
@@ -98,6 +99,7 @@ Resources:
       ContainerDefinitions:
         - Name: !Sub ${Prefix}-load-test
           Image: !Ref LoadContainerImage
+          Cpu: 2048
           Memory: 4096
           Environment:
             - Name: S3_BUCKET
