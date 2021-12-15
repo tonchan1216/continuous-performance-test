@@ -23,7 +23,12 @@ Resources:
 
 Outputs:
   SQSQueue:
-    Description: SQS  queue name
+    Description: SQS queue name
     Value: !Ref SQSQueue
     Export:
       Name: SQS-Name
+  SQSQueueArn:
+    Description: SQS queue Arn
+    Value: !GetAtt SQSQueue.Arn
+    Export:
+      Name: SQS-Arn
