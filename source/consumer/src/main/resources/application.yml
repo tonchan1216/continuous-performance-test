@@ -8,19 +8,19 @@ cloud:
       auto: false
 
 amazon:
-  region: {AWS_REGION}
+  region: ${AWS_REGION}
   dynamodb:
-    endpoint: https://dynamodb.{AWS_REGION}.amazonaws.com
-    table: {DYNAMODB_TABLE}
+    endpoint: https://dynamodb.${AWS_REGION}.amazonaws.com
+    table: ${DYNAMODB_TABLE}
   ecs:
-    cluster: {ECS_CLUSTER}
-    taskDefinition: {TASK_DEFINITION}
-    containerName: {CONTAINER_NAME}
-    subnetIds: {SUBNET_ID}
-    securityGroup: {SECURITY_GROUP}
+    cluster: ${ECS_CLUSTER}
+    taskDefinition: ${TASK_DEFINITION}
+    containerName: ${CONTAINER_NAME}
+    subnetIds: ${SUBNET_ID}
+    securityGroup: ${SECURITY_GROUP}
     pollingInterval: 60000
   s3:
-    bucketName: {S3_BUCKET}
+    bucketName: ${S3_BUCKET}
   sqs:
-    endpoint: https://sqs.{AWS_REGION}.amazonaws.com/
-    queueName: {SQS_NAME}
+    endpoint: https://sqs.${AWS_REGION}.amazonaws.com/
+    queueName: ${SQS_NAME}
