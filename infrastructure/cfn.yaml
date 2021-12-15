@@ -95,6 +95,9 @@ Resources:
 
   ECSTaskRoleStack:
     Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - SQSStack
+      - DynamoDBStack
     Properties:
       TemplateURL: ./ecs-taskrole.yaml
       Parameters:
@@ -122,14 +125,14 @@ Resources:
         VPCId: !Ref VPCId
         Keypair: !Ref Keypair
 
-  # ECSServiceStack:
-  #   Type: AWS::CloudFormation::Stack
-  #   DependsOn:
-  #     - NetworkStack
-  #     - ECSClusterStack
-  #     - ECSTaskRoleStack
-  #     - ECSTaskDefinitionStack
-  #   Properties:
-  #     TemplateURL: ./ecs-service.yaml
-  #     Parameters:
-  #       Prefix: !Ref Prefix
+  ECSServiceStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - NetworkStack
+      - ECSClusterStack
+      - ECSTaskRoleStack
+      - ECSTaskDefinitionStack
+    Properties:
+      TemplateURL: ./ecs-service.yaml
+      Parameters:
+        Prefix: !Ref Prefix
