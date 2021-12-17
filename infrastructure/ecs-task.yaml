@@ -77,11 +77,11 @@ Resources:
               Value:
                 Fn::ImportValue: !Sub ${Prefix}-EcsClusterSg
             - Name: DYNAMODB_TABLE
+              Value: !Sub ${Prefix}-runner-status
             - Name: S3_BUCKET
               Value: !Sub ${Prefix}-bucket
             - Name: SQS_NAME
-              Value:
-                Fn::ImportValue: !Sub ${Prefix}-Table
+              Value: !Sub ${Prefix}-queue
 
   LoadECSTaskDefinition:
     Type: AWS::ECS::TaskDefinition

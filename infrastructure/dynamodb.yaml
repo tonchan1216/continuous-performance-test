@@ -32,11 +32,6 @@ Resources:
         WriteCapacityUnits: 5
 
 Outputs:
-  DynamoDBTable:
-    Description: DynamoDB Table
-    Value: !Ref DynamoDBTable
-    Export:
-      Name: !Sub ${Prefix}-Table
   DynamoDBTableArn:
     Description: DynamoDB Table Arn
     Value: !GetAtt DynamoDBTable.Arn

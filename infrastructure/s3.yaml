@@ -23,10 +23,3 @@ Resources:
         BlockPublicPolicy: True
         IgnorePublicAcls: True
         RestrictPublicBuckets: True
-
-Outputs:
-  S3Bucket:
-    Description: S3 bucket name
-    Value: !Ref S3Bucket
-    Export:
-      Name: S3Bucket

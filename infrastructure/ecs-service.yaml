@@ -16,7 +16,7 @@ Resources:
     Properties:
       Cluster:
         Fn::ImportValue: !Sub ${Prefix}-EcsCluster
-      DesiredCount: 0
+      DesiredCount: 1
       TaskDefinition:
         Fn::ImportValue: !Sub ${Prefix}-ConsumerECSTaskDefinition
       LaunchType: EC2
