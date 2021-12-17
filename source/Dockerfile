@@ -7,9 +7,7 @@ LABEL  maintainer "cleartone1216"
 ARG APP_PATH
 
 COPY . ${APP_PATH}/
-RUN mvn install -f ${APP_PATH}/common/pom.xml && \
-    mvn install -f ${APP_PATH}/batch/pom.xml && \
-    mvn package -Dmaven.test.skip=true -f ${APP_PATH}/consumer/pom.xml
+RUN mvn package -Dmaven.test.skip=true -f ${APP_PATH}/pom.xml
 
 # Deploy Image
 FROM adoptopenjdk/openjdk11:alpine-slim
