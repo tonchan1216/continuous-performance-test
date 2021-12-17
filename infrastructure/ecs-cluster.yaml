@@ -57,7 +57,6 @@ Resources:
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AutoScalingGroupName : !Sub ${Prefix}-ecs-cluster-asg
       VPCZoneIdentifier:
         - Fn::ImportValue: !Sub ${Prefix}-PrivateSubnet1
         - Fn::ImportValue: !Sub ${Prefix}-PrivateSubnet2
@@ -93,7 +92,6 @@ Resources:
   ECSLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      LaunchConfigurationName : !Sub ${Prefix}-ECSLaunchConfiguration
       ImageId: !Ref ECSAMI
       InstanceType: t3.medium
       IamInstanceProfile: !Ref IamInstanceProfile

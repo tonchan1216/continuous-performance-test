@@ -23,19 +23,6 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
 
-  CloudFormationAccessPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: !Sub ${Prefix}-CloudFormationAccessPolicy
-      PolicyDocument:
-        Statement:
-          - Effect: Allow
-            Action:
-              - "cloudformation:*"
-            Resource: "*"
-      Roles:
-        - !Ref ECSTaskRole
-
   SQSAccessPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -44,8 +31,11 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
-              - "sqs:*"
-            Resource: "*"
+              - "sqs:DeleteMessage"
+              - "sqs:GetQueueAttributes"
+              - "sqs:ReceiveMessage"
+              - "sqs:GetQueueUrl"
+            Resource: !ImportValue SQS-Arn
       Roles:
         - !Ref ECSTaskRole
 
@@ -57,8 +47,15 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
-              - "dynamodb:*"
-            Resource: "*"
+              - "dynamodb:DescribeTable"
+              - "dynamodb:Get*"
+              - "dynamodb:Query"
+              - "dynamodb:Scan"
+              - "dynamodb:Delete*"
+              - "dynamodb:Update*"
+              - "dynamodb:PutItem"
+            Resource:
+              Fn::ImportValue: !Sub ${Prefix}-Table-Arn
       Roles:
         - !Ref ECSTaskRole
 
@@ -70,20 +67,27 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
-              - "s3:*"
-            Resource: "*"
+              - "s3:PutObject"
+              - "s3:GetObject"
+              - "s3:ListBucket"
+            Resource: !Sub arn:aws:s3:::${Prefix}-bucket
       Roles:
         - !Ref ECSTaskRole
 
-  SSMAccessPolicy:
+  CodepipelineAccessPolicy:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: !Sub ${Prefix}-SSMAccessPolicy
+      PolicyName: !Sub ${Prefix}-CodepipelineAccessPolicy
       PolicyDocument:
         Statement:
           - Effect: Allow
             Action:
-              - "ssm:*"
+              - "codepipeline:GetPipeline"
+              - "codepipeline:GetPipelineState"
+              - "codepipeline:GetPipelineExecution"
+              - "codepipeline:ListPipelineExecutions"
+              - "codepipeline:ListPipelines"
+              - "codepipeline:PutApprovalResult"
             Resource: "*"
       Roles:
         - !Ref ECSTaskRole
