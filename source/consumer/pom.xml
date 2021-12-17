@@ -16,6 +16,7 @@
 
     <properties>
         <java.version>11</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-cloud.version>2020.0.4</spring-cloud.version>
     </properties>
 
@@ -76,6 +77,10 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${project.parent.version}</version>
+                <configuration>
+                    <excludeDevtools>true</excludeDevtools>
+                    <executable>true</executable>
+                </configuration>
             </plugin>
         </plugins>
     </build>
