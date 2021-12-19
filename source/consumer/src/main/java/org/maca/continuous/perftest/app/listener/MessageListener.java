@@ -16,6 +16,7 @@ import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteExcep
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.aws.messaging.config.annotation.EnableSqs;
+import org.springframework.cloud.aws.messaging.listener.Acknowledgment;
 import org.springframework.cloud.aws.messaging.listener.SqsMessageDeletionPolicy;
 import org.springframework.cloud.aws.messaging.listener.annotation.SqsListener;
 import org.springframework.stereotype.Component;
@@ -33,25 +34,30 @@ public class MessageListener {
     @Autowired
     Job job;
 
-    @SqsListener(value = "${amazon.sqs.queueName}", deletionPolicy = SqsMessageDeletionPolicy.ON_SUCCESS)
-    public void onMessage(String message) throws
+    @SqsListener(value = "${amazon.sqs.queueName}", deletionPolicy = SqsMessageDeletionPolicy.NEVER)
+    public void onMessage(String message, Acknowledgment ack) throws
             JobExecutionAlreadyRunningException, JobRestartException,
             JobInstanceAlreadyCompleteException, JobParametersInvalidException {
-        ObjectMapper mapper = new ObjectMapper();
         //Parse message from SQS
         String params;
         try {
+            ObjectMapper mapper = new ObjectMapper();
             Topic parsedTopic = mapper.readValue(message, Topic.class);
             Message parsedMessage = mapper.readValue(parsedTopic.message, Message.class);
             Parameter parameter = new Parameter();
             parameter.setApproval(parsedMessage.approval);
             params = mapper.writeValueAsString(parameter);
         } catch (JsonProcessingException e) {
-            log.warn(e.getMessage());
+            log.error(e.getMessage());
+            ack.acknowledge();
             return;
         }
 
+        // delete queue message
         log.info(params);
+        ack.acknowledge();
+
+        // Kick a spring Batch job
         Map<String, JobParameter> jobParameterMap = new HashMap<>();
         jobParameterMap.put("param", new JobParameter(params));
         jobParameterMap.put("time", new JobParameter(System.currentTimeMillis()));
