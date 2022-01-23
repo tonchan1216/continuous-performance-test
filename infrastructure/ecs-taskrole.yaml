@@ -70,7 +70,9 @@ Resources:
               - "s3:PutObject"
               - "s3:GetObject"
               - "s3:ListBucket"
-            Resource: !Sub arn:aws:s3:::${Prefix}-bucket
+            Resource:
+              - !Sub arn:aws:s3:::${Prefix}-bucket/*
+              - !Sub arn:aws:s3:::${Prefix}-bucket*
       Roles:
         - !Ref ECSTaskRole
 
@@ -88,6 +90,22 @@ Resources:
               - "codepipeline:ListPipelineExecutions"
               - "codepipeline:ListPipelines"
               - "codepipeline:PutApprovalResult"
+            Resource: "*"
+      Roles:
+        - !Ref ECSTaskRole
+
+  ECSAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-ECSAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "ecs:RunTask"
+              - "ecs:DescribeTasks"
+              - "ecs:ListTasks"
+              - "iam:PassRole"
             Resource: "*"
       Roles:
         - !Ref ECSTaskRole
