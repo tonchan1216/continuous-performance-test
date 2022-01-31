@@ -7,8 +7,8 @@ reporting:
     dump-xml: /tmp/artifacts/results.xml
   - module: passfail
     criteria:
-      response time: p90 > 0.0005s for 10s, continue as failed
-      error rate: failures < 50% for 60s, continue as failed
+      response time: p90 > 3s for 10s, continue as failed
+      error rate: failures > 1% for 60s, continue as failed
   - module: junit-xml
     filename: /tmp/artifacts/pass-fail.xml
     data-source: pass-fail
