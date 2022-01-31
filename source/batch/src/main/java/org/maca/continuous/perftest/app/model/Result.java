@@ -18,16 +18,16 @@ public class Result {
     public Double testDuration;
 
     @JsonProperty("throughput")
-    public Integer throughput;
+    public long throughput;
 
     @JsonProperty("concurrency")
-    public Integer concurrency;
+    public long concurrency;
 
     @JsonProperty("success")
-    public Integer success;
+    public long success;
 
     @JsonProperty("fail")
-    public Integer fail;
+    public long fail;
 
     @JsonProperty("avg_response_time")
     public Double avgResponseTime;

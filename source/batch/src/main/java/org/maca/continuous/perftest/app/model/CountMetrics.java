@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class CountMetrics {
     public String name;
-    public Integer value;
+    public long value;
 }
