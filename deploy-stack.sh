@@ -7,8 +7,6 @@ parameters+=",VPCCiderBlock=10.2.25.0/24"
 parameters+=",Prefix=ma-furutanito"
 parameters+=",NeedDataResource=false"
 parameters+=",Keypair=MA-furutanito-keypair"
-parameters+=",ConsumerContainerImage=cleartone1216/perftest-consumer:latest"
-parameters+=",LoadContainerImage=cleartone1216/load-test:latest"
 
 echo ${parameters}
 
