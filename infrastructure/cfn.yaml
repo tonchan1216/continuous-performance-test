@@ -23,116 +23,544 @@ Parameters:
     Description: VPC ID
     Type: AWS::EC2::VPC::Id
     Default: vpc
-  NeedS3Bucket:
-    Description: If you need create S3 Bucket, select true. You have already it, select false.
+  IGWId:
+    Description: Internet Gateway ID
+    Type: String
+    Default: igw-xxxxx
+  NeedDataResource:
+    Description: If you need create S3 Bucket and DynamoDB, select true. You have already it, select false.
     Type: String
     Default : false
     AllowedValues : [true, false]
   Keypair:
     Description: Keypair Name
-    Type: String
-    MinLength: 1
-    MaxLength: 255
-    Default: test
-  ConsumerContainerImage:
-    Description: Prefix Name
-    Type: String
-    MinLength: 1
-    Default: repository/name:tag
-  LoadContainerImage:
-    Description: Prefix Name
-    Type: String
-    MinLength: 1
-    Default: repository/name:tag
+    Type: AWS::EC2::KeyPair::KeyName
+  ECSAMI:
+    Description: AMI ID
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ecs/optimized-ami/amazon-linux-2/recommended/image_id
 
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: Stack Configuration
+        Parameters:
+          - Prefix
+          - NeedDataResource
+      -
+        Label:
+          default: VPC Configuration
+        Parameters:
+          - VPCCiderBlock
+          - VPCId
+          - IGWId
+      -
+        Label:
+          default: EC2 Configuration
+        Parameters:
+          - Keypair
+          - ECSAMI
 
 Conditions:
-  CreateS3Resources: !Equals
-    - !Ref NeedS3Bucket
+  CreateRetainResources: !Equals
+    - !Ref NeedDataResource
     - true
 
 Resources:
 # ------------------------------------------------------------#
-# Nested Stack
+# Network
 # ------------------------------------------------------------#
-  NetworkStack:
-    Type: AWS::CloudFormation::Stack
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
     Properties:
-      TemplateURL: ./network.yaml
-      Parameters:
-        VPCId: !Ref VPCId
-        VPCCiderBlock: !Ref VPCCiderBlock
-        Prefix: !Ref Prefix
+      CidrBlock: !Select [0, !Cidr [!Ref VPCCiderBlock, 6, 5]]
+      VpcId: !Ref VPCId
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-PublicSubnet1
 
-  S3Stack:
-    Type: AWS::CloudFormation::Stack
-    Condition: CreateS3Resources
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
     Properties:
-      TemplateURL: ./s3.yaml
-      Parameters:
-        Prefix: !Ref Prefix
+      CidrBlock: !Select [1, !Cidr [!Ref VPCCiderBlock, 6, 5]]
+      VpcId: !Ref VPCId
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-PublicSubnet2
 
-  SQSStack:
-    Type: AWS::CloudFormation::Stack
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
     Properties:
-      TemplateURL: ./sqs.yaml
-      Parameters:
-        Prefix: !Ref Prefix
+      CidrBlock: !Select [2, !Cidr [!Ref VPCCiderBlock, 6, 5]]
+      VpcId: !Ref VPCId
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-PrivateSubnet1
 
-  DynamoDBStack:
-    Type: AWS::CloudFormation::Stack
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
     Properties:
-      TemplateURL: ./dynamodb.yaml
-      Parameters:
-        Prefix: !Ref Prefix
+      CidrBlock: !Select [3, !Cidr [!Ref VPCCiderBlock, 6, 5]]
+      VpcId: !Ref VPCId
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-PrivateSubnet2
 
-  # ECRStack:
-  #   Type: AWS::CloudFormation::Stack
+  PrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Select [4, !Cidr [!Ref VPCCiderBlock, 6, 5]]
+      VpcId: !Ref VPCId
+      AvailabilityZone: !Select [2, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-PrivateSubnet3
+
+  # IGW:
+  #   Type: AWS::EC2::InternetGateway
   #   Properties:
-  #     TemplateURL: ./ecr.yaml
-  #     Parameters:
-  #       Prefix: !Ref Prefix
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub ${Prefix}-igw
 
-  ECSTaskRoleStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn:
-      - SQSStack
-      - DynamoDBStack
-    Properties:
-      TemplateURL: ./ecs-taskrole.yaml
-      Parameters:
-        Prefix: !Ref Prefix
+  # IGWAttach:
+  #   Type: AWS::EC2::VPCGatewayAttachment
+  #   Properties:
+  #     InternetGatewayId: !Ref IGW
+  #     VpcId: !Ref VPCId
 
-  ECSTaskDefinitionStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn:
-      - ECSTaskRoleStack
+  CustomRouteTable:
+    Type: AWS::EC2::RouteTable
     Properties:
-      TemplateURL: ./ecs-task.yaml
-      Parameters:
-        Prefix: !Ref Prefix
-        ConsumerContainerImage: !Ref ConsumerContainerImage
-        LoadContainerImage: !Ref LoadContainerImage
+      VpcId: !Ref VPCId
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-PublicRoute
 
-  ECSClusterStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn:
-      - NetworkStack
+  CustomRoute:
+    Type: AWS::EC2::Route
     Properties:
-      TemplateURL: ./ecs-cluster.yaml
-      Parameters:
-        Prefix: !Ref Prefix
-        VPCId: !Ref VPCId
-        Keypair: !Ref Keypair
+      RouteTableId: !Ref CustomRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGWId
 
-  ECSServiceStack:
-    Type: AWS::CloudFormation::Stack
-    DependsOn:
-      - NetworkStack
-      - ECSClusterStack
-      - ECSTaskRoleStack
-      - ECSTaskDefinitionStack
+  PublicSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      TemplateURL: ./ecs-service.yaml
-      Parameters:
-        Prefix: !Ref Prefix
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref CustomRouteTable
+
+  PublicSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref CustomRouteTable
+
+  NatGWEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: !Ref VPCId
+
+  NatGW:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NatGWEIP.AllocationId
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-NatGW
+
+  MainRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPCId
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-PrivateRoute
+
+  MainRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref MainRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGW
+
+  PrivateSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref MainRouteTable
+
+  PrivateSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref MainRouteTable
+
+  PrivateSubnet3Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      RouteTableId: !Ref MainRouteTable
+
+# ------------------------------------------------------------#
+# S3
+# ------------------------------------------------------------#
+  S3Bucket:
+    Condition: CreateRetainResources
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "${Prefix}-bucket"
+      AccessControl: "Private"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+
+# ------------------------------------------------------------#
+# SQS
+# ------------------------------------------------------------#
+  SQSQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub ${Prefix}-queue
+      VisibilityTimeout: 30
+      DelaySeconds: 5
+      MaximumMessageSize: 26144
+      MessageRetentionPeriod: 345600
+      ReceiveMessageWaitTimeSeconds: 0
+
+  SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties: 
+      TopicName: !Sub ${Prefix}-approval
+
+  SNSSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: sqs
+      Endpoint: !GetAtt SQSQueue.Arn
+      Region: !Ref "AWS::Region"
+      TopicArn: !Ref SNSTopic
+
+# ------------------------------------------------------------#
+# DynamoDB
+# ------------------------------------------------------------#
+  DynamoDBTable:
+    Condition: CreateRetainResources
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: !Sub ${Prefix}-runner-status
+      BillingMode: PROVISIONED
+      SSESpecification: !Ref "AWS::NoValue"
+      KeySchema:
+        - AttributeName: testId
+          KeyType: HASH
+        - AttributeName: startTime
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: testId
+          AttributeType: S
+        - AttributeName: startTime
+          AttributeType: S
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+# ------------------------------------------------------------#
+# ECR
+# ------------------------------------------------------------#
+  ConsumerRepository:
+    Condition: CreateRetainResources
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      RepositoryName: !Sub ${Prefix}/consumer
+
+  LoadRepository:
+    Condition: CreateRetainResources
+    Type: AWS::ECR::Repository
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      RepositoryName: !Sub ${Prefix}/load-test
+
+# ------------------------------------------------------------#
+# ECS
+# ------------------------------------------------------------#
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: !Sub ${Prefix}-ECSTaskRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+
+  SQSAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-SQSAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "sqs:DeleteMessage"
+              - "sqs:GetQueueAttributes"
+              - "sqs:ReceiveMessage"
+              - "sqs:GetQueueUrl"
+            Resource: !GetAtt SQSQueue.Arn
+      Roles:
+        - !Ref ECSTaskRole
+
+  DynamoDBAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-DynamoDBAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "dynamodb:DescribeTable"
+              - "dynamodb:Get*"
+              - "dynamodb:Query"
+              - "dynamodb:Scan"
+              - "dynamodb:Delete*"
+              - "dynamodb:Update*"
+              - "dynamodb:PutItem"
+            Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${Prefix}-runner-status
+      Roles:
+        - !Ref ECSTaskRole
+
+  S3AccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-S3AccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "s3:PutObject"
+              - "s3:GetObject"
+              - "s3:ListBucket"
+            Resource:
+              - !Sub arn:aws:s3:::${Prefix}-bucket/*
+              - !Sub arn:aws:s3:::${Prefix}-bucket*
+      Roles:
+        - !Ref ECSTaskRole
+
+  CodepipelineAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-CodepipelineAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "codepipeline:GetPipeline"
+              - "codepipeline:GetPipelineState"
+              - "codepipeline:GetPipelineExecution"
+              - "codepipeline:ListPipelineExecutions"
+              - "codepipeline:ListPipelines"
+              - "codepipeline:PutApprovalResult"
+            Resource: "*"
+      Roles:
+        - !Ref ECSTaskRole
+
+  ECSAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ${Prefix}-ECSAccessPolicy
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action:
+              - "ecs:RunTask"
+              - "ecs:DescribeTasks"
+              - "ecs:ListTasks"
+              - "iam:PassRole"
+            Resource: "*"
+      Roles:
+        - !Ref ECSTaskRole
+
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      RoleName: !Sub ${Prefix}-ECSTaskExecutionRole
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+        - arn:aws:iam::aws:policy/SecretsManagerReadWrite
+
+  ConsumerECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${Prefix}-consumer
+      RequiresCompatibilities:
+        - EC2
+      Cpu: 512
+      Memory: 1024
+      NetworkMode: bridge
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn: !Ref ECSTaskRole
+      ContainerDefinitions:
+        - Name: !Sub ${Prefix}-consumer
+          Image: !Ref ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Prefix}/consumer:latest
+          Cpu: 512
+          Memory: 1024
+          Environment:
+            - Name: AWS_REGION
+              Value: !Ref "AWS::Region"
+            - Name: ECS_CLUSTER
+              Value: !Ref ECSCluster
+            - Name: TASK_DEFINITION
+              Value: !Sub ${Prefix}-load-test
+            - Name: CONTAINER_NAME
+              Value: !Sub ${Prefix}-load-test
+            - Name: SUBNET_ID
+              Value: !Sub
+                - ${subnet1},${subnet2},${subnet3}
+                - subnet1: !Ref PrivateSubnet1
+                  subnet2: !Ref PrivateSubnet2
+                  subnet3: !Ref PrivateSubnet3
+            - Name: SECURITY_GROUP
+              Value: !Ref SecurityGroupEcsCluster
+            - Name: DYNAMODB_TABLE
+              Value: !Sub ${Prefix}-runner-status
+            - Name: S3_BUCKET
+              Value: !Sub ${Prefix}-bucket
+            - Name: SQS_NAME
+              Value: !Sub ${Prefix}-queue
+
+  LoadECSTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${Prefix}-load-test
+      RequiresCompatibilities:
+        - FARGATE
+        - EC2
+      Memory: 4096
+      Cpu: 2048
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn: !Ref ECSTaskRole
+      ContainerDefinitions:
+        - Name: !Sub ${Prefix}-load-test
+          Image: !Ref ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Prefix}/load-test:latest
+          Cpu: 2048
+          Memory: 4096
+          Environment:
+            - Name: S3_BUCKET
+              Value: !Sub ${Prefix}-bucket
+
+  ECSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${Prefix}-EC2ContainerServiceRole
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+
+  IamInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref ECSRole
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub ${Prefix}-cluster
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-cluster
+
+  ECSAutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+        - !Ref PrivateSubnet3
+      LaunchConfigurationName: !Ref ECSLaunchConfiguration
+      MinSize: 1
+      MaxSize: 3
+      DesiredCapacity: 1
+      Tags:
+        - Key: Name
+          Value: !Sub ${Prefix}-cluster
+          PropagateAtLaunch: true
+        - Key: Owner
+          Value: !Sub ${Prefix}
+          PropagateAtLaunch: true
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT5M
+    UpdatePolicy:
+      AutoScalingReplacingUpdate:
+        WillReplace: true
+
+  SecurityGroupEcsCluster:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub ${Prefix}-SecurityGroupEcsCluster
+      GroupDescription: SecurityGroupEcsCluster
+      VpcId: !Ref VPCId
+      Tags:
+        - Key : Name
+          Value: !Sub ${Prefix}-SecurityGroupEcsCluster
+
+  ECSLaunchConfiguration:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: !Ref ECSAMI
+      InstanceType: t3.medium
+      IamInstanceProfile: !Ref IamInstanceProfile
+      KeyName: !Ref Keypair
+      SecurityGroups:
+        - !Ref  SecurityGroupEcsCluster
+      AssociatePublicIpAddress: false
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+          yum install -y aws-cfn-bootstrap
+          /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ECSAutoScalingGroup --region ${AWS::Region}
+
+  ECSService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref ECSCluster
+      DesiredCount: 1
+      TaskDefinition: !Ref ConsumerECSTaskDefinition
+      LaunchType: EC2
+      ServiceName: !Sub ${Prefix}-consumer-service
