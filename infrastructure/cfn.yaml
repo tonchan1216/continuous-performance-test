@@ -427,7 +427,7 @@ Resources:
       TaskRoleArn: !Ref ECSTaskRole
       ContainerDefinitions:
         - Name: !Sub ${Prefix}-consumer
-          Image: !Ref ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Prefix}/consumer:latest
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Prefix}/consumer:latest
           Cpu: 512
           Memory: 1024
           Environment:
@@ -468,7 +468,7 @@ Resources:
       TaskRoleArn: !Ref ECSTaskRole
       ContainerDefinitions:
         - Name: !Sub ${Prefix}-load-test
-          Image: !Ref ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Prefix}/load-test:latest
+          Image: !Sub ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${Prefix}/load-test:latest
           Cpu: 2048
           Memory: 4096
           Environment:
